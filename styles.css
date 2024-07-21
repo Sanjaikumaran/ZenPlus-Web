@@ -1,0 +1,577 @@
+html,
+body {
+    font-family: Arial, sans-serif;
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+/* Tooltip container */
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Tooltip text */
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%; /* Position the tooltip above the element */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: black;
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+
+/* Show the tooltip text on hover */
+[data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+nav ul li {
+    display: inline-block;
+    position: relative;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgb(221, 221, 221);
+}
+nav ul li:hover{
+    background-color: #ececec;
+} 
+nav ul li ul.dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+nav ul li ul.dropdown li {
+    display: block;
+    padding: 4px 10px;
+    white-space: nowrap;
+}
+
+nav ul li:hover ul.dropdown {
+    display: block;
+}
+
+#header {
+    background-color: #5C509C;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    flex-shrink: 0;
+}
+
+#header h1 {
+
+    margin: 9px 10px;
+}
+
+#header-details input {
+    font-size: 16px;
+    color: white;
+    background: #5C509C;
+    border: none;
+}
+
+#cart-summary {
+    display: flex;
+    flex-wrap: wrap;
+    /* Allows items to wrap to the next line if necessary */
+    justify-content: space-between;
+    align-items: center;
+    background-color: #5C509C;
+    color: white;
+    padding: 10px 20px;
+    /*border-radius: 5px;*/
+    /*margin: 20px;*/
+}
+
+.summary-item {
+    flex: 1 1 16%;
+    /* Adjust the percentage as needed to fit all items in one line */
+    text-align: center;
+    margin: 5px;
+}
+
+#product-input {
+    margin-top: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 10px 10px 20px;
+}
+
+#product-input-labels {
+    display: flex;
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+#product-input-labels label {
+    width: 362px;
+}
+
+#product-input input {
+    padding: 10px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex: 1;
+}
+
+#product-input button {
+    background-color: #5C509C;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.suggestions-box {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    width: calc(100% - 420px);
+    margin-top: -10px;
+    margin-left: 20px;
+
+}
+
+.suggestions-box div {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestions-box div:hover {
+    background-color: #f0f0f0;
+}
+
+
+#cart-titles {
+    display: flex;
+    justify-content: space-evenly;
+    background-color: #5C509C;
+    color: white;
+    padding: 10px;
+}
+
+#cart-titles span {
+    flex: 1;
+    text-align: center;
+
+}
+
+#cart-items {
+    max-height: calc(100vh - 240px);
+    overflow-y: auto;
+    background-color: white;
+    flex-grow: 1;
+}
+
+.cart-item {
+    border-bottom: 1px solid #00000017;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+}
+
+.cart-item:hover {
+    background-color: rgb(241, 241, 241);
+
+}
+
+.cart-item span {
+    flex: 1;
+    text-align: center;
+
+}
+
+.remove-btn {
+    background-color: #FF5733;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 1;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100vh;
+    /* Full height */
+    overflow: hidden;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Black with opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    /* Centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    /* Could be more or less, depending on screen size */
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal h2 {
+    margin-top: 0;
+}
+
+#customer-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#customer-form label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+#customer-form input,
+#customer-form textarea,
+#customer-form select {
+    width: 100%;
+    /* Full width of the form */
+    padding: 10px;
+
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    /* Include padding and border in the element's total width and height */
+}
+
+#customer-form textarea {
+    resize: vertical;
+    /* Allow vertical resizing only */
+}
+
+#customer-form .form-actions {
+    display: flex;
+    justify-content: space-between;
+    /* Space out the buttons */
+    width: 100%;
+    align-items: center;
+}
+
+#customer-form .form-actions .left-actions {
+    display: flex;
+    flex: 1;
+}
+
+#customer-form .form-actions .right-actions {
+    display: flex;
+    gap: 10px;
+    /* Space between Cancel and Print buttons */
+}
+
+#customer-form .form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#customer-form .form-actions .save-btn {
+    background-color: #4CAF50;
+    /* Green */
+    color: white;
+    margin-right: auto;
+    /* Push the Save button to the left */
+}
+
+#customer-form .form-actions .cancel-btn {
+    background-color: #f44336;
+    /* Red */
+    color: white;
+}
+
+#customer-form .form-actions .print-btn {
+    background-color: #5C509C;
+    /* Original color */
+    color: white;
+}
+
+#customer-form .form-actions .save-btn:hover {
+    background-color: #45a049;
+    /* Darker green */
+}
+
+#customer-form .form-actions .cancel-btn:hover {
+    background-color: #da190b;
+    /* Darker red */
+}
+
+#customer-form .form-actions .print-btn:hover {
+    background-color: #4a407a;
+    /* Darker original color */
+}
+
+/* Style the scrollbar track (the area you scroll through) */
+::-webkit-scrollbar {
+    width: 5px;
+    /* Width of the scrollbar */
+}
+
+/* Style the scrollbar handle (the draggable part) */
+::-webkit-scrollbar-thumb {
+    background-color: #5C509C;
+    /* Color of the scrollbar handle */
+    border-radius: 5px;
+    /* Rounded corners for the scrollbar handle */
+}
+
+/* Style the scrollbar track (the background) */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    /* Background color of the track */
+    border-radius: 5px;
+    /* Rounded corners for the track */
+}
+
+/* Style the scrollbar corner (the area where horizontal and vertical scrollbars meet) */
+::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+    /* Background color of the scrollbar corner */
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* For Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Media Query for Tablets and Small Screens (768px and below) */
+@media (max-width: 768px) {
+    #header {
+        padding: 10px;
+        font-size: 1.2em;
+        /* Adjust text size */
+    }
+
+    #cart-summary {
+        flex-direction: column;
+        /* Stack items vertically */
+        padding: 10px;
+        font-size: 0.9em;
+        /* Adjust text size */
+    }
+
+    .summary-item {
+        flex: 1 1 100%;
+        /* Take full width */
+        text-align: center;
+        margin: 5px 0;
+        /* Adjust margins for stacked layout */
+    }
+
+    #product-input {
+        flex-direction: column;
+        /* Stack input and button vertically */
+        align-items: stretch;
+    }
+
+    #product-input input,
+    #product-input button {
+        margin-right: 0;
+        margin-bottom: 10px;
+        /* Space between inputs and button */
+        width: 100%;
+        /* Full width for inputs and button */
+    }
+
+    #cart-titles {
+        flex-direction: column;
+        /* Stack titles vertically */
+        padding: 10px;
+        font-size: 0.9em;
+        /* Adjust text size */
+    }
+
+    #cart-titles span {
+        flex: 1 1 100%;
+        /* Take full width */
+    }
+
+    #cart-items {
+        max-height: calc(100vh - 180px);
+        /* Adjust height for smaller screens */
+    }
+
+    .cart-item {
+        flex-direction: column;
+        /* Stack content vertically in cart items */
+        align-items: flex-start;
+    }
+
+    .cart-item span {
+        flex: 1;
+        text-align: left;
+        margin-bottom: 5px;
+        /* Space between elements */
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        width: 90%;
+        /* Increase width for better fit */
+        max-width: none;
+        /* Remove maximum width constraint */
+        margin: 10% auto;
+        /* Center with adjusted margin */
+    }
+
+    #customer-form input,
+    #customer-form textarea {
+        width: 100%;
+        /* Full width for form elements */
+    }
+
+    #customer-form .form-actions {
+        flex-direction: column;
+        /* Stack buttons vertically */
+        align-items: stretch;
+    }
+
+    #customer-form .form-actions .left-actions,
+    #customer-form .form-actions .right-actions {
+        width: 100%;
+        margin-bottom: 10px;
+        /* Space between action groups */
+    }
+
+    #customer-form .form-actions .right-actions {
+        flex-direction: row;
+        /* Horizontal alignment for Cancel and Print */
+    }
+
+    #customer-form .form-actions button {
+        width: 100%;
+        /* Full width for buttons */
+        margin: 5px 0;
+        /* Space between buttons */
+    }
+}
+
+/* Media Query for Mobile Screens (480px and below) */
+@media (max-width: 480px) {
+    #header {
+        font-size: 1em;
+        /* Further reduce text size */
+    }
+
+    #cart-summary {
+        font-size: 0.8em;
+        /* Further reduce text size */
+    }
+
+    #product-input {
+        margin: 10px;
+        /* Adjust margins */
+    }
+
+    #product-input input,
+    #product-input button {
+        padding: 8px;
+        /* Adjust padding */
+    }
+
+    #cart-titles {
+        font-size: 0.8em;
+        /* Further reduce text size */
+    }
+
+    #cart-items {
+        max-height: calc(100vh - 140px);
+        /* Adjust height for very small screens */
+    }
+
+    .cart-item {
+        padding: 8px;
+        /* Adjust padding */
+    }
+
+    .cart-item span {
+        font-size: 0.8em;
+        /* Further reduce text size */
+    }
+
+    .modal-content {
+        width: 95%;
+        /* Full width for modal */
+        max-width: none;
+        /* Remove maximum width constraint */
+    }
+}
