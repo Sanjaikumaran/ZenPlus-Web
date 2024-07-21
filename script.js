@@ -104,6 +104,7 @@ document.addEventListener('click', event => {
   }
 
   function addItemToCart(productDetails, quantity, discount, price) {
+    document.getElementById("empty-cart").style.display="none";
     const [
       productName,
       productPrice,
@@ -232,8 +233,10 @@ document.addEventListener('click', event => {
       }
       else{
         cart = [];
+        document.getElementById("empty-cart").style.display="flex";
       cartItems.innerHTML = "";
       updateCartSummary();
+
       }
       // Add your additional logic here if needed
     }

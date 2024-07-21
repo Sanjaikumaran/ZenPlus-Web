@@ -1,0 +1,358 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    overflow-x: clip;
+    user-select: none;
+}
+
+/* Tooltip container */
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Tooltip text */
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: black;
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+
+/* Show the tooltip text on hover */
+[data-tooltip]:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    /* Width of the scrollbar */
+}
+
+/* Style the scrollbar handle (the draggable part) */
+::-webkit-scrollbar-thumb {
+    background-color: #5C509C;
+    /* Color of the scrollbar handle */
+    border-radius: 5px;
+    /* Rounded corners for the scrollbar handle */
+}
+
+/* Style the scrollbar track (the background) */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    /* Background color of the track */
+    border-radius: 5px;
+    /* Rounded corners for the track */
+}
+
+/* Style the scrollbar corner (the area where horizontal and vertical scrollbars meet) */
+::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+    /* Background color of the scrollbar corner */
+}
+
+nav {
+    font-weight: 550;
+    color: rgb(255, 255, 255);
+    background-color: #9185e0;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+nav ul li {
+    display: inline-block;
+    position: relative;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+nav ul li:hover {
+    background-color: #786edf;
+}
+
+nav ul li ul.dropdown {
+    font-weight: 500;
+
+    display: none;
+    color: rgb(0, 0, 0);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+nav ul li ul.dropdown li:hover {
+    background-color: #e2dcdc;
+
+}
+nav ul li ul.dropdown li {
+    display: block;
+    padding: 4px 10px;
+    white-space: nowrap;
+    border-bottom: 1px solid rgb(221, 221, 221);
+}
+
+nav ul li:hover ul.dropdown {
+    display: block;
+}
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+#action-container {
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 10px 10px 20px;
+    display: flex;
+}
+
+#action-container label {
+    margin: 5px;
+}
+
+#action-container button {
+    background-color: #5C509C;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+#search-box input[type="text"] {
+    width: calc(100vw - 430px);
+    padding: 10px;
+    margin: 5px 0 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#action-container #action-btns {
+    width: max-content;
+}
+
+#action-container button:hover {
+    background-color: #4b4281;
+}
+
+table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+}
+
+thead {
+    display: table;
+    /* Ensures the header is properly displayed */
+    width: 99.97vw;
+    /* Full width of the table */
+}
+
+th,
+td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+th {
+    cursor: pointer;
+    background-color: #5c509c;
+    color: white;
+}
+
+th:hover {
+    background-color: #4b4281;
+}
+
+tbody {
+    display: block;
+    width: 99.95vw;
+    max-height: calc(100vh - 175px);
+    /* Adjust according to desired height */
+    overflow-y: auto;
+    overflow-x: clip;
+
+
+}
+
+tbody tr {
+    width: calc(100vw);
+}
+
+tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    /* Ensures proper width alignment */
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+#table-summary {
+    display: flex;
+    justify-content: end;
+    background: #5c509c;
+    background: #5c509c;
+    padding: 7px 20px;
+    color: white;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 1;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100vh;
+    /* Full height */
+    overflow: hidden;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Black with opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    /* Centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    /* Could be more or less, depending on screen size */
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+#close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#close-btn:hover,
+#close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#modal h2 {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0;
+}
+
+#modal-form label {
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+#modal-form input,
+#modal-form textarea,
+#modal-form select {
+    width: 100%;
+    /* Full width of the form */
+    padding: 10px;
+
+    margin: 5px 0 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    /* Include padding and border in the element's total width and height */
+}
+
+#modal-form textarea {
+    resize: vertical;
+    /* Allow vertical resizing only */
+}
+
+.form-actions {
+    display: flex;
+    justify-content: end;
+    /* Space out the buttons */
+    width: 100%;
+    align-items: center;
+}
+
+.form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 16px;
+    /* Original color */
+    color: white;
+}
+
+.form-actions #cancel-btn {
+    background-color: #f44336;
+    /* Red */
+}
+
+.form-actions #save-btn {
+    background-color: #5C509C;
+}
+
+.form-actions #cancel-btn:hover {
+    background-color: #da190b;
+    /* Darker red */
+}
+
+.form-actions #save-btn:hover {
+    background-color: #4a407a;
+    /* Darker original color */
+}

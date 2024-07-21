@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Table</title>
+    <link rel="stylesheet" href="table.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li>
+                File
+                <ul class="dropdown">
+                    <li>New</li>
+                    <li>Open</li>
+                    <li>Save</li>
+                    <li>Holded Bills</li>
+                    <li>Quit</li>
+
+
+                </ul>
+            </li>
+            <li>
+                Product
+                <ul class="dropdown">
+                    <li>View Products</li>
+
+                    <li>Find Product</li>
+                    <li>Add New Product</li>
+                    <li>Edit Product</li>
+                    <li>Remove Product</li>
+
+                </ul>
+            </li>
+            <li>
+                Employee
+                <ul class="dropdown">
+                    <li>View Employees</li>
+                    <li>Find Employee</li>
+                    <li>Add New Employee</li>
+                    <li>Edit Employee</li>
+                    <li>Remove Employee</li>
+                </ul>
+            </li>
+            <li>
+                Customer
+                <ul class="dropdown">
+                    <li>View Customers</li>
+
+                    <li>Find Customer</li>
+                    <li>Add New Customer</li>
+                    <li>Edit Customer</li>
+                    <li>Remove Customer</li>
+                </ul>
+            </li>
+            <li>
+                Transaction
+                <ul class="dropdown">
+                    <li>View Transactions</li>
+
+                    <li>Find Transaction</li>
+                    <li>Add New Transaction</li>
+                    <li>Edit Transaction</li>
+                    <li>Remove Transaction</li>
+                </ul>
+            </li>
+            <li>
+                Transaction Item
+                <ul class="dropdown">
+                    <li>View Transaction Items</li>
+                    <li>Find Transaction Item</li>
+                    <li>Add New Transaction Item</li>
+                    <li>Edit Transaction Item</li>
+                    <li>Remove Transaction Item</li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="action-container">
+        <div id="search-box">
+            <label for="search">Search</label>
+            <input type="text" id="search" placeholder="Search...">
+        </div>
+        <div id="action-btns">
+            <button data-tooltip="Ctrl + N" type="button" id="add-btn">Add New</button>
+            <button data-tooltip="Alt + E" type="button" id="edit-btn">Edit</button>
+            <button data-tooltip="Del" type="button" id="remove-btn">Remove</button>
+        </div>
+    </div>
+    <div class="container">
+        <table id="dataTable">
+            <thead>
+                <!-- Headers will be inserted here dynamically -->
+            </thead>
+            <tbody>
+                <!-- Data will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+    
+    
+    <div id="table-summary">
+        <div class="total-rows">Total Rows: <span id="total-rows">0</span></div>
+
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2>Add Window <span id="close-btn">&times;</span></h2>
+
+            <form id="modal-form">
+                <!-- Form fields will be inserted here dynamically -->
+            </form>
+            <div class="form-actions">
+                <button type="button" id="cancel-btn">Cancel</button>
+                <button type="button" id="save-btn">Add</button></div>
+        </div>
+    </div>
+    <script src="table.js"></script>
+</body>
+
+</html>

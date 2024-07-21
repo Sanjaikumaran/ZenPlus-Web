@@ -3,12 +3,15 @@ body {
     font-family: Arial, sans-serif;
     height: 100%;
     margin: 0;
+    user-select: none;
+
 }
 
 body {
     display: flex;
     flex-direction: column;
 }
+
 /* Tooltip container */
 [data-tooltip] {
     position: relative;
@@ -19,7 +22,8 @@ body {
 [data-tooltip]::before {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 125%; /* Position the tooltip above the element */
+    bottom: 125%;
+    /* Position the tooltip above the element */
     left: 50%;
     transform: translateX(-50%);
     background-color: black;
@@ -51,11 +55,12 @@ nav ul li {
     position: relative;
     padding: 4px 10px;
     cursor: pointer;
-    border-bottom: 1px solid rgb(221, 221, 221);
 }
-nav ul li:hover{
+
+nav ul li:hover {
     background-color: #ececec;
-} 
+}
+
 nav ul li ul.dropdown {
     display: none;
     position: absolute;
@@ -72,6 +77,7 @@ nav ul li ul.dropdown {
 nav ul li ul.dropdown li {
     display: block;
     padding: 4px 10px;
+    border-bottom: 1px solid rgb(221, 221, 221);
     white-space: nowrap;
 }
 
@@ -199,6 +205,19 @@ nav ul li:hover ul.dropdown {
     overflow-y: auto;
     background-color: white;
     flex-grow: 1;
+}
+
+#empty-cart {
+    font-size: xx-large;
+    font-weight: 100;
+    display: block;
+    /* Use flexbox */
+    justify-content: center;
+    /* Center horizontally */
+    align-items: center;
+    /* Center vertically */
+    margin: auto;
+    /* Center the element if it has a width */
 }
 
 .cart-item {
