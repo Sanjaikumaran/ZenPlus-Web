@@ -21,34 +21,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.querySelector(".save-btn");
   const customerPrintBtn = document.querySelector(".print-btn");
   const customerCancelBtn = document.querySelector(".cancel-btn");
-  document.querySelectorAll('nav ul li').forEach(item => {
-    item.addEventListener('click', event => {
-        // Prevent closing the dropdown when clicking inside it
-        if(event.target.closest('.dropdown')) return;
+  document.querySelectorAll("nav ul li").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      // Prevent closing the dropdown when clicking inside it
+      if (event.target.closest(".dropdown")) return;
 
-        // Hide all other open dropdowns
-        document.querySelectorAll('nav ul li ul.dropdown').forEach(dropdown => {
-            if (dropdown !== item.querySelector('ul.dropdown')) {
-                dropdown.style.display = 'none';
-            }
-        });
-
-        // Toggle the current dropdown
-        const dropdown = item.querySelector('ul.dropdown');
-        if (dropdown) {
-            dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+      // Hide all other open dropdowns
+      document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
+        if (dropdown !== item.querySelector("ul.dropdown")) {
+          dropdown.style.display = "none";
         }
-    });
-});
+      });
 
-// Close dropdowns when clicking outside
-document.addEventListener('click', event => {
-    if (!event.target.closest('nav')) {
-        document.querySelectorAll('nav ul li ul.dropdown').forEach(dropdown => {
-            dropdown.style.display = 'none';
-        });
+      // Toggle the current dropdown
+      const dropdown = item.querySelector("ul.dropdown");
+      if (dropdown) {
+        dropdown.style.display =
+          dropdown.style.display === "block" ? "none" : "block";
+      }
+    });
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest("nav")) {
+      document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
     }
-});
+  });
 
   let cart = [];
   const products = [
@@ -104,7 +105,7 @@ document.addEventListener('click', event => {
   }
 
   function addItemToCart(productDetails, quantity, discount, price) {
-    document.getElementById("empty-cart").style.display="none";
+    //document.getElementById("empty-cart").style.display="none";
     const [
       productName,
       productPrice,
@@ -198,45 +199,46 @@ document.addEventListener('click', event => {
     }
   });
 
+  clearCartBtn.addEventListener("click", () => {
+    cart = [];
+    //document.getElementById("empty-cart").style.display="flex";
+    cartItems.innerHTML = "";
+    updateCartSummary();
+  });
+
   document.addEventListener("keydown", function (event) {
-    
     if (event.key === "Enter") {
       event.preventDefault(); // Prevent the default action (if any) associated with the Enter key
       if (customerModal.style.display === "block") {
-        customerPrintBtn.click()
+        customerPrintBtn.click();
+      } else {
+        const product = productDetails.value;
+        const quantity = quantityInput.value;
+        const discount = discountInput.value;
+        const price = priceInput.value;
+        if (product && quantity && discount && price) {
+          addItemBtn.click();
+        }
       }
-      else{
-      const product = productDetails.value;
-      const quantity = quantityInput.value;
-      const discount = discountInput.value;
-      const price = priceInput.value;
-      if (product && quantity && discount && price) {
-        addItemBtn.click();
-      }
-      }
-
     }
-    if(event.ctrlKey && event.key=="s"){
+    if (event.ctrlKey && event.key == "s") {
       event.preventDefault(); // Prevent the default action (if any) associated with Ctrl+P
 
-      console.log("Saved")
+      console.log("Saved");
     }
-    if(event.ctrlKey && event.key=="h"){
+    if (event.ctrlKey && event.key == "h") {
       event.preventDefault(); // Prevent the default action (if any) associated with Ctrl+P
 
-      console.log("Holded")
+      console.log("Holded");
     }
     if (event.key === "Escape") {
-      
       if (customerModal.style.display === "block") {
         customerModal.style.display = "none";
-      }
-      else{
+      } else {
         cart = [];
-        document.getElementById("empty-cart").style.display="flex";
-      cartItems.innerHTML = "";
-      updateCartSummary();
-
+        //document.getElementById("empty-cart").style.display="flex";
+        cartItems.innerHTML = "";
+        updateCartSummary();
       }
       // Add your additional logic here if needed
     }
