@@ -210,7 +210,7 @@ nav ul li:hover ul.dropdown {
 #empty-cart {
     font-size: xx-large;
     font-weight: 100;
-    display: block;ko
+    display: block;
     /* Use flexbox */
     justify-content: center;
     /* Center horizontally */
