@@ -1,13 +1,29 @@
+let productList = [];
+
+// Handle data received from Python
+function handleDataFromPython(data) {
+  console.log("Data received from Python:", data);
+  productList = data; // Assign received data to productList
+}
+
+// Initialize WebChannel and event listeners
+window.onload = function () {
+  new QWebChannel(qt.webChannelTransport, function (channel) {
+    window.handler = channel.objects.handler;
+  });
+};
+
+// Ensure the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
   const addItemBtn = document.getElementById("add-item-btn");
   const clearCartBtn = document.getElementById("clear-cart-btn");
   const holdBtn = document.getElementById("hold-btn");
   const printBtn = document.getElementById("print-btn");
+  const productDetailsContainer = document.getElementById("productDetails");
   const productDetails = document.getElementById("product-details");
-  const quantityInput = document.getElementById("quantity");
-  const discountInput = document.getElementById("discount");
-  const priceInput = document.getElementById("price");
-  const suggestionsBox = document.getElementById("suggestions");
+  const quantityInput = document.getElementById("quantityInput");
+  const discountInput = document.getElementById("discountInput");
+  const priceInput = document.getElementById("priceInput");
   const cartItems = document.getElementById("cart-items");
   const totalProducts = document.getElementById("total-products");
   const totalQuantity = document.getElementById("total-quantity");
@@ -21,19 +37,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.querySelector(".save-btn");
   const customerPrintBtn = document.querySelector(".print-btn");
   const customerCancelBtn = document.querySelector(".cancel-btn");
+  const emptyCart = document.getElementById("empty-cart");
+  let productIdValue;
+
+  // Prevent closing dropdown when clicking inside it
   document.querySelectorAll("nav ul li").forEach((item) => {
     item.addEventListener("click", (event) => {
-      // Prevent closing the dropdown when clicking inside it
       if (event.target.closest(".dropdown")) return;
 
-      // Hide all other open dropdowns
       document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
         if (dropdown !== item.querySelector("ul.dropdown")) {
           dropdown.style.display = "none";
         }
       });
 
-      // Toggle the current dropdown
       const dropdown = item.querySelector("ul.dropdown");
       if (dropdown) {
         dropdown.style.display =
@@ -52,20 +69,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   let cart = [];
-  const products = [
-    { name: "Product1", price: 100, id: "001", brand: "BrandA" },
-    { name: "Product1", price: 100, id: "001", brand: "BrandA" },
-    { name: "Product1", price: 100, id: "001", brand: "BrandA" },
-    { name: "Product1", price: 100, id: "001", brand: "BrandA" },
-    { name: "Product1", price: 100, id: "001", brand: "BrandA" },
-    { name: "Product2", price: 200, id: "002", brand: "BrandB" },
-    { name: "Product3", price: 150, id: "003", brand: "BrandC" },
-    // Add more products as needed
-  ];
+
   function updateClock() {
     const now = new Date();
     const date = String(now.getDate()).padStart(2, "0");
-    const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const month = String(now.getMonth() + 1).padStart(2, "0");
     const year = now.getFullYear();
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
@@ -75,10 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("clock").textContent = timeString;
   }
 
-  // Update the clock immediately
+  // Update the clock immediately and every second
   updateClock();
-  // Update the clock every second
   setInterval(updateClock, 1000);
+
   function updateCartSummary() {
     let totalProductsCount = 0;
     let totalQuantityCount = 0;
@@ -104,19 +112,25 @@ document.addEventListener("DOMContentLoaded", () => {
     totalAmount.textContent = `₹ ${totalAmountValue.toFixed(2)}`;
   }
 
-  function addItemToCart(productDetails, quantity, discount, price) {
-    //document.getElementById("empty-cart").style.display="none";
+  function addItemToCart(
+    productDetails,
+    productIdValue,
+    quantity,
+    discount,
+    price
+  ) {
+    emptyCart?.remove();
     const [
       productName,
       productPrice,
       productId,
       productBrand,
     ] = productDetails.split(",");
-    const taxes = (price - discount) * 0.05; // Example tax calculation
+    const taxes = (price - discount) * 0.05;
     const total = price - discount + taxes;
 
     const item = {
-      productId,
+      productIdValue,
       productName,
       quantity: parseInt(quantity),
       price: parseFloat(price),
@@ -130,17 +144,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const cartItem = document.createElement("div");
     cartItem.className = "cart-item";
     cartItem.innerHTML = `
-          <span>${cart.length}</span>
-          <span>${item.productId}</span>
-          <span>${item.productName}</span>
-          <span>${item.quantity}</span>
-          <span>&#8377; ${item.price.toFixed(2)} </span>
-          <span>&#8377; ${item.discount.toFixed(2)} </span>
-          <span>&#8377; ${(item.price * item.quantity).toFixed(2)} </span>
-          <span>&#8377; ${item.taxes.toFixed(2)} </span>
-          <span>&#8377; ${item.total.toFixed(2)} </span>
-          <span><button class="remove-btn">Remove</button></span>
-      `;
+      <span>${cart.length}</span>
+      <span>${item.productIdValue}</span>
+      <span>${item.productName}</span>
+      <span>${item.quantity}</span>
+      <span>&#8377; ${item.price.toFixed(2)}</span>
+      <span>&#8377; ${item.discount.toFixed(2)}</span>
+      <span>&#8377; ${(item.price * item.quantity).toFixed(2)}</span>
+      <span>&#8377; ${item.taxes.toFixed(2)}</span>
+      <span>&#8377; ${item.total.toFixed(2)}</span>
+      <span><button class="remove-btn">Remove</button></span>
+    `;
 
     cartItems.appendChild(cartItem);
 
@@ -148,38 +162,76 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function filterProducts(query) {
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(query.toLowerCase())
-    );
+    // Ensure the query is a string
+    const queryStr = query.toString().toLowerCase();
+
+    return productList.filter((product) => {
+      // Ensure the product fields are strings and convert them to lowercase
+      const productName = (product.ProductName || "").toLowerCase();
+      const productID = (product.ProductID || "").toLowerCase();
+      const brand = (product.Brand || "").toLowerCase();
+      const price = (product.Price || "").toString().toLowerCase();
+
+      // Check if any of the fields include the query string
+      return (
+        productName.includes(queryStr) ||
+        productID.includes(queryStr) ||
+        brand.includes(queryStr) ||
+        price.includes(queryStr)
+      );
+    });
   }
 
   function showSuggestions(filteredProducts) {
-    suggestionsBox.innerHTML = "";
+    // Remove any existing suggestions box before creating a new one
+    const existingSuggestionsBox = document.getElementById("suggestionsBox");
+    if (existingSuggestionsBox) {
+      existingSuggestionsBox.remove();
+    }
+
+    const suggestionsBox = document.createElement("div");
+    suggestionsBox.className = "suggestions-box";
+    suggestionsBox.id = "suggestionsBox";
+    productDetailsContainer.appendChild(suggestionsBox);
+
+    if (filteredProducts.length === 0) {
+      const noMatchItem = document.createElement("div");
+      noMatchItem.textContent = "No matching products found";
+      suggestionsBox.appendChild(noMatchItem);
+      return;
+    }
+
     filteredProducts.forEach((product) => {
       const suggestionItem = document.createElement("div");
-      suggestionItem.textContent = `${product.name} (${product.price}, ${product.id}, ${product.brand})`;
-      suggestionItem.addEventListener("click", () => {
-        suggestionsBox.style.display = "none";
-        productDetails.value = `${product.name}`;
-        priceInput.value = product.price;
 
-        discountInput.value = "0"; // Default discount to 0
-        quantityInput.value = "1"; // Default quantity to 1
-        suggestionsBox.innerHTML = ""; // Clear suggestions
+      suggestionItem.textContent = `${product.ProductID}, ${product.ProductName}, ${product.Brand}, ${product.SellingPrice}`;
+
+      suggestionItem.addEventListener("click", () => {
+        productDetails.value = product.ProductName;
+        priceInput.value = product.SellingPrice;
+        discountInput.value = product.Discount;
+        quantityInput.value = "1";
+        productIdValue = product.ProductID;
+
+        // Remove all suggestion-related elements
+        suggestionsBox.remove();
       });
+
       suggestionsBox.appendChild(suggestionItem);
     });
   }
 
   productDetails.addEventListener("input", (event) => {
     const query = event.target.value;
+    const suggestionsBox = document.getElementById("suggestionsBox");
+
     if (query.length > 0) {
       const filteredProducts = filterProducts(query);
       showSuggestions(filteredProducts);
-      suggestionsBox.style.display = "block";
     } else {
-      suggestionsBox.innerHTML = ""; // Clear suggestions if input is empty
-      suggestionsBox.style.display = "none";
+      if (suggestionsBox) {
+        suggestionsBox.remove();
+      }
     }
   });
 
@@ -190,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const price = priceInput.value;
 
     if (product && quantity && discount && price) {
-      addItemToCart(product, quantity, discount, price);
+      addItemToCart(product, productIdValue, quantity, discount, price);
 
       productDetails.value = "";
       quantityInput.value = "";
@@ -201,14 +253,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearCartBtn.addEventListener("click", () => {
     cart = [];
-    //document.getElementById("empty-cart").style.display="flex";
     cartItems.innerHTML = "";
+    cartItems.appendChild(emptyCart);
     updateCartSummary();
   });
 
   document.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
-      event.preventDefault(); // Prevent the default action (if any) associated with the Enter key
+      event.preventDefault();
       if (customerModal.style.display === "block") {
         customerPrintBtn.click();
       } else {
@@ -222,13 +274,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
     if (event.ctrlKey && event.key == "s") {
-      event.preventDefault(); // Prevent the default action (if any) associated with Ctrl+P
-
+      event.preventDefault();
       console.log("Saved");
     }
     if (event.ctrlKey && event.key == "h") {
-      event.preventDefault(); // Prevent the default action (if any) associated with Ctrl+P
-
+      event.preventDefault();
       console.log("Holded");
     }
     if (event.key === "Escape") {
@@ -236,16 +286,14 @@ document.addEventListener("DOMContentLoaded", () => {
         customerModal.style.display = "none";
       } else {
         cart = [];
-        //document.getElementById("empty-cart").style.display="flex";
         cartItems.innerHTML = "";
+        cartItems.appendChild(emptyCart);
         updateCartSummary();
       }
-      // Add your additional logic here if needed
     }
     if (event.ctrlKey && event.key === "p") {
-      event.preventDefault(); // Prevent the default action (if any) associated with Ctrl+P
+      event.preventDefault();
       customerModal.style.display = "block";
-      // Add your additional logic here if needed
     }
   });
 
@@ -272,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   customerForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    // Handle customer form submission
     customerModal.style.display = "none";
   });
 
@@ -283,7 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Show the customer modal (you can trigger this based on your logic)
-  document.getElementById("print-btn").addEventListener("click", () => {
+  printBtn.addEventListener("click", () => {
     customerModal.style.display = "block";
   });
 });

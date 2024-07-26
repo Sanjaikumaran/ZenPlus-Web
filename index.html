@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 
 <body>
@@ -19,20 +20,16 @@
                     <li>Save</li>
                     <li>Holded Bills</li>
                     <li>Quit</li>
-
-
                 </ul>
             </li>
             <li>
                 Product
                 <ul class="dropdown">
-                    <li>View Products</li>
-
+                    <li><a href="table.html" target="_blank" rel="noopener noreferrer">View Products</a></li>
                     <li>Find Product</li>
                     <li>Add New Product</li>
                     <li>Edit Product</li>
                     <li>Remove Product</li>
-
                 </ul>
             </li>
             <li>
@@ -49,7 +46,6 @@
                 Customer
                 <ul class="dropdown">
                     <li>View Customers</li>
-
                     <li>Find Customer</li>
                     <li>Add New Customer</li>
                     <li>Edit Customer</li>
@@ -60,7 +56,6 @@
                 Transaction
                 <ul class="dropdown">
                     <li>View Transactions</li>
-
                     <li>Find Transaction</li>
                     <li>Add New Transaction</li>
                     <li>Edit Transaction</li>
@@ -91,32 +86,26 @@
         </div>
     </div>
 
-    <div>
+    <div id="productDetails">
         <div id="product-input-labels">
             <label for="product-details">Product Name:</label>
-
-            <label for="quantity">Quantity:</label>
-            <label for="discount">Discount:</label>
-            <label for="price">Price:</label>
+            <label for="quantityInput">Quantity:</label>
+            <label for="discountInput">Discount:</label>
+            <label for="priceInput">Price:</label>
         </div>
         <div id="product-input">
             <input type="text" placeholder="Product (Name,Price,ID,Brand)" id="product-details" autocomplete="off"
                 required>
-
-
-
-            <input type="number" placeholder="Quantity" id="quantity" autocomplete="off" required>
-
-            <input type="number" placeholder="Discount" id="discount" autocomplete="off" required>
-
-            <input type="number" placeholder="Price" id="price" autocomplete="off" required>
+            <input type="number" placeholder="Quantity" id="quantityInput" autocomplete="off" required>
+            <input type="number" placeholder="Discount" id="discountInput" autocomplete="off" required>
+            <input type="number" placeholder="Price" id="priceInput" autocomplete="off" required>
             <button data-tooltip="Enter" id="add-item-btn">Add Item</button>
-
             <button data-tooltip="Escape" id="clear-cart-btn">Clear Cart</button>
             <button data-tooltip="Ctrl + H" id="hold-btn">Hold</button>
             <button data-tooltip="Ctrl + P" id="print-btn">Print</button>
-        </div><!-- Suggestions box -->
-        <div id="suggestions" class="suggestions-box"></div>
+        </div>
+        <!-- Suggestions box -->
+        <!--<div id="suggestionsBox" class="suggestions-box"></div>-->
     </div>
 
     <div id="cart-titles">
@@ -134,10 +123,11 @@
 
     <div id="cart-items">
         <div id="empty-cart">
-            <h1>🛒 Cart is Empty</h1>   
+            <h1>🛒 Cart is Empty</h1>
         </div>
         <!-- Cart items will be added here dynamically -->
     </div>
+
     <div id="cart-summary">
         <div class="summary-item">Total Products: <span id="total-products">0</span></div>
         <div class="summary-item">Total Quantity: <span id="total-quantity">0</span></div>
@@ -150,17 +140,15 @@
     <!-- Customer Details Modal -->
     <div id="customer-modal" class="modal">
         <div class="modal-content">
-            <span  class="close-btn">&times;</span>
+            <span class="close-btn">&times;</span>
             <h2>Customer Details</h2>
             <form id="customer-form">
                 <label for="customer-name">Name:</label>
                 <input type="text" id="customer-name" name="name" placeholder="Enter your name" autocomplete="off"
                     required>
-
                 <label for="customer-email">Email:</label>
                 <input type="email" id="customer-email" name="email" placeholder="Enter your email" autocomplete="off"
                     required>
-
                 <label for="customer-phone">Phone:</label>
                 <input type="tel" id="customer-phone" name="phone" placeholder="Enter your phone number"
                     autocomplete="off" required>
@@ -174,8 +162,7 @@
                 </datalist>
                 <label for="customer-address">Address:</label>
                 <textarea id="customer-address" name="address" placeholder="Enter your address" rows="4"
-                    autocomplete="off " required></textarea>
-
+                    autocomplete="off" required></textarea>
                 <div class="form-actions">
                     <div class="left-actions">
                         <button data-tooltip="Ctrl + S" type="button" class="save-btn">Save</button>
