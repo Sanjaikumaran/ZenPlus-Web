@@ -1,6 +1,5 @@
 import sys
 import os
-<<<<<<< HEAD
 import json
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -8,13 +7,6 @@ from PyQt5.QtCore import QUrl, QObject, pyqtSlot
 from PyQt5.QtWebChannel import QWebChannel
 import operations_access  # Ensure this module exists and has the required methods
 
-=======
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QUrl, QObject, pyqtSlot
-from PyQt5.QtWebChannel import QWebChannel
-import json
->>>>>>> origin/master
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -28,15 +20,9 @@ class MainWindow(QMainWindow):
 
         # Get the file path of the HTML file
         html_file_path = os.path.abspath(
-<<<<<<< HEAD
             os.path.join(os.path.dirname(__file__), "table.html")
         )
         print(f"Loading HTML file from: {html_file_path}")
-=======
-            os.path.join(os.path.dirname(__file__), "index.html")
-        )
-        print(html_file_path)
->>>>>>> origin/master
 
         # Load the HTML file
         self.browser.setUrl(QUrl.fromLocalFile(html_file_path))
@@ -50,14 +36,6 @@ class MainWindow(QMainWindow):
         # Create a layout and add the QWebEngineView to it
         layout = QVBoxLayout()
         layout.addWidget(self.browser)
-<<<<<<< HEAD
-=======
-        
-        # Add a button to send data to JavaScript
-        button = QPushButton("Send Data to JavaScript")
-        button.clicked.connect(self.send_data_to_js)
-        layout.addWidget(button)
->>>>>>> origin/master
 
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -66,7 +44,6 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
-<<<<<<< HEAD
         self.showMaximized()
 
         # Connect to the loadFinished signal to call send_data_to_js when the page is loaded
@@ -88,30 +65,12 @@ class MainWindow(QMainWindow):
         # Handle URL changes if needed
         print(f"Navigated to: {url.toString()}")
 
-=======
-        # self.showFullScreen()
-        self.showMaximized()
-
-    @pyqtSlot()
-    def send_data_to_js(self):
-        data = [
-            { "name": "Product1", "price": 100, "id": "001", "brand": "BrandA" },
-            { "name": "Product2", "price": 200, "id": "002", "brand": "BrandB" },
-            { "name": "Product3", "price": 150, "id": "003", "brand": "BrandC" }
-        ]
-        json_data = json.dumps(data)
-        self.browser.page().runJavaScript(f'handleDataFromPython({json_data})')
->>>>>>> origin/master
 
 class Handler(QObject):
     @pyqtSlot(result=str)
     def getData(self):
         return "Data from Python"
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
 # Create an instance of QApplication
 app = QApplication(sys.argv)
 
