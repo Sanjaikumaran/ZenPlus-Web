@@ -15,26 +15,31 @@
             <li>
                 File
                 <ul class="dropdown">
-                    <li>New</li>
+                    <li><a href="index.html">New</a></li>
                     <li>Open</li>
                     <li>Save</li>
                     <li>Holded Bills</li>
                     <li>Quit</li>
+
+
                 </ul>
             </li>
+
             <li>
                 Product
-                <ul class="dropdown">
-                    <li><a href="table.html" target="_blank" rel="noopener noreferrer">View Products</a></li>
+                <ul id="Products" class="dropdown">
+                    <li>View Products</li>
+
                     <li>Find Product</li>
                     <li>Add New Product</li>
                     <li>Edit Product</li>
                     <li>Remove Product</li>
+
                 </ul>
             </li>
             <li>
                 Employee
-                <ul class="dropdown">
+                <ul id="Employees" class="dropdown">
                     <li>View Employees</li>
                     <li>Find Employee</li>
                     <li>Add New Employee</li>
@@ -44,8 +49,9 @@
             </li>
             <li>
                 Customer
-                <ul class="dropdown">
+                <ul id="Customers" class="dropdown">
                     <li>View Customers</li>
+
                     <li>Find Customer</li>
                     <li>Add New Customer</li>
                     <li>Edit Customer</li>
@@ -54,8 +60,9 @@
             </li>
             <li>
                 Transaction
-                <ul class="dropdown">
+                <ul id="Transactions" class="dropdown">
                     <li>View Transactions</li>
+
                     <li>Find Transaction</li>
                     <li>Add New Transaction</li>
                     <li>Edit Transaction</li>
@@ -64,7 +71,7 @@
             </li>
             <li>
                 Transaction Item
-                <ul class="dropdown">
+                <ul id="TransactionItems" class="dropdown">
                     <li>View Transaction Items</li>
                     <li>Find Transaction Item</li>
                     <li>Add New Transaction Item</li>
@@ -138,45 +145,19 @@
     </div>
 
     <!-- Customer Details Modal -->
-    <div id="customer-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Customer Details</h2>
-            <form id="customer-form">
-                <label for="customer-name">Name:</label>
-                <input type="text" id="customer-name" name="name" placeholder="Enter your name" autocomplete="off"
-                    required>
-                <label for="customer-email">Email:</label>
-                <input type="email" id="customer-email" name="email" placeholder="Enter your email" autocomplete="off"
-                    required>
-                <label for="customer-phone">Phone:</label>
-                <input type="tel" id="customer-phone" name="phone" placeholder="Enter your phone number"
-                    autocomplete="off" required>
-                <label for="payment-method">Payment Method:</label>
-                <input list="payment-methods" id="payment-method" name="payment-method" placeholder="Payment Method"
-                    autocomplete="off">
-                <datalist id="payment-methods">
-                    <option value="Cash"></option>
-                    <option value="Card"></option>
-                    <option value="UPI"></option>
-                </datalist>
-                <label for="customer-address">Address:</label>
-                <textarea id="customer-address" name="address" placeholder="Enter your address" rows="4"
-                    autocomplete="off" required></textarea>
-                <div class="form-actions">
-                    <div class="left-actions">
-                        <button data-tooltip="Ctrl + S" type="button" class="save-btn">Save</button>
-                    </div>
-                    <div class="right-actions">
-                        <button data-tooltip="Escape" type="button" class="cancel-btn">Cancel</button>
-                        <button data-tooltip="Enter" type="submit" class="print-btn">Print</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="script.js"></script>
+    <script>
+        // Ensure the function runs when the document is ready
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            load_Table(
+                "Products"
+            );
+        });
+    </script>
+
+
 </body>
 
 </html>

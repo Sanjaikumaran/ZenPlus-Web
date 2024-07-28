@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Table</title>
-    <link rel="stylesheet" href="table.css">
+    <link rel="stylesheet" href="styles.css">
     <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
 
 </head>
@@ -16,7 +16,7 @@
             <li>
                 File
                 <ul class="dropdown">
-                    <li>New</li>
+                    <li><a href="index.html">New</a></li>
                     <li>Open</li>
                     <li>Save</li>
                     <li>Holded Bills</li>
@@ -25,9 +25,10 @@
 
                 </ul>
             </li>
+
             <li>
                 Product
-                <ul class="dropdown">
+                <ul id="Products" class="dropdown">
                     <li>View Products</li>
 
                     <li>Find Product</li>
@@ -39,7 +40,7 @@
             </li>
             <li>
                 Employee
-                <ul class="dropdown">
+                <ul id="Employees" class="dropdown">
                     <li>View Employees</li>
                     <li>Find Employee</li>
                     <li>Add New Employee</li>
@@ -49,7 +50,7 @@
             </li>
             <li>
                 Customer
-                <ul class="dropdown">
+                <ul id="Customers" class="dropdown">
                     <li>View Customers</li>
 
                     <li>Find Customer</li>
@@ -60,7 +61,7 @@
             </li>
             <li>
                 Transaction
-                <ul class="dropdown">
+                <ul id="Transactions" class="dropdown">
                     <li>View Transactions</li>
 
                     <li>Find Transaction</li>
@@ -71,7 +72,7 @@
             </li>
             <li>
                 Transaction Item
-                <ul class="dropdown">
+                <ul id="TransactionItems" class="dropdown">
                     <li>View Transaction Items</li>
                     <li>Find Transaction Item</li>
                     <li>Add New Transaction Item</li>
@@ -103,27 +104,37 @@
             </tbody>
         </table>
     </div>
-    
-    
-    <div id="table-summary">    
+
+
+    <div id="table-summary">
         <div class="total-rows">Total Rows: <span id="total-rows">0</span></div>
 
     </div>
 
     <!-- Modal -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <h2>Add Window <span id="close-btn">&times;</span></h2>
 
-            <form id="modal-form">
-                <!-- Form fields will be inserted here dynamically -->
-            </form>
-            <div class="form-actions">
-                <button type="button" id="cancel-btn">Cancel</button>
-                <button type="button" id="save-btn">Add</button></div>
-        </div>
-    </div>
-    <script src="table.js"></script>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+
+            const data = JSON.parse(localStorage.getItem('tableData'));
+            if (data) {
+                load_Table(data.tableName);
+                if (data.index == 3) {
+                    setTimeout(() => {
+
+                        addBtn.click()
+                    }, 100);
+                } else if (data.index == 2) {
+                    document.getElementById("search").focus()
+                }
+            } else {
+                console.error('No data found in localStorage.');
+            }
+        });
+    </script>
+
 </body>
 
 </html>
