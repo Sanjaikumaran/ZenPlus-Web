@@ -50,7 +50,6 @@ class Operations:
 
             # Prepare values for the query
             query_values = list(column_values.values())
-
             # Execute the INSERT query with the provided data on local database
             self.cursor_local.execute(insert_query, query_values)
 

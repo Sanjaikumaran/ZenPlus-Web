@@ -1,4 +1,3 @@
-
 html,
 body {
     font-family: Arial, sans-serif;
@@ -6,7 +5,7 @@ body {
     margin: 0;
     user-select: none;
     overflow-x: clip;
- display: flex;
+    display: flex;
     flex-direction: column;
 }
 
@@ -22,7 +21,7 @@ body {
     content: attr(data-tooltip);
     position: absolute;
     bottom: 125%;
-   
+
     left: 50%;
     transform: translateX(-50%);
     background-color: black;
@@ -45,29 +44,29 @@ body {
 
 ::-webkit-scrollbar {
     width: 5px;
-   
+
 }
 
 
 ::-webkit-scrollbar-thumb {
     background-color: #5C509C;
-   
+
     border-radius: 5px;
-   
+
 }
 
 
 ::-webkit-scrollbar-track {
     background: #f1f1f1;
-   
+
     border-radius: 5px;
-   
+
 }
 
 
 ::-webkit-scrollbar-corner {
     background: #f1f1f1;
-   
+
 }
 
 input[type=number]::-webkit-outer-spin-button,
@@ -126,33 +125,34 @@ nav ul li:hover ul.dropdown {
 
 
 .modal {
-   
+
     position: fixed;
-   
+
     z-index: 1;
-   
+
     left: 0;
     top: 0;
     width: 100%;
-   
-   
-   
-    overflow: hidden;height: 100vh;
-   
+
+
+
+    overflow: hidden;
+    height: 100vh;
+
     background-color: rgba(0, 0, 0, 0.5);
-   
+
 }
 
 .modal-content {
     background-color: #fefefe;
     margin: 3% auto;
-   
+
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
     height: fit-content;
     max-height: calc(70vh + 100px);
-   
+
     max-width: 600px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
@@ -170,6 +170,7 @@ nav ul li:hover ul.dropdown {
     justify-content: space-between;
     margin-top: 0;
 }
+
 .close-btn {
     color: #aaa;
     float: right;
@@ -183,6 +184,7 @@ nav ul li:hover ul.dropdown {
     text-decoration: none;
     cursor: pointer;
 }
+
 .modal-form label {
     margin: 10px 0;
     font-weight: bold;
@@ -192,25 +194,25 @@ nav ul li:hover ul.dropdown {
 .modal-form textarea,
 .modal-form select {
     width: 100%;
-   
+
     padding: 10px;
 
     margin: 5px 0 10px 0;
     border: 1px solid #ccc;
     border-radius: 5px;
     box-sizing: border-box;
-   
+
 }
 
 .modal-form textarea {
     resize: vertical;
-   
+
 }
 
 .form-actions {
     display: flex;
     justify-content: end;
-   
+
     width: 100%;
     margin-top: 10px;
     align-items: center;
@@ -223,13 +225,13 @@ nav ul li:hover ul.dropdown {
     cursor: pointer;
     margin: 5px;
     font-size: 16px;
-   
+
     color: white;
 }
 
 .form-actions #cancel-btn {
     background-color: #f44336;
-   
+
 }
 
 .form-actions #save-btn {
@@ -239,12 +241,12 @@ nav ul li:hover ul.dropdown {
 .form-actions #cancel-btn:hover {
     color: #fefefe;
     background-color: #da190b;
-   
+
 }
 
 .form-actions #save-btn:hover {
     background-color: #4a407a;
-   
+
 }
 
 
@@ -273,19 +275,19 @@ nav ul li:hover ul.dropdown {
 #cart-summary {
     display: flex;
     flex-wrap: wrap;
-   
+
     justify-content: space-between;
     align-items: center;
     background-color: #5C509C;
     color: white;
     padding: 10px 20px;
-   
-   
+
+
 }
 
 .summary-item {
     flex: 1 1 16%;
-   
+
     text-align: center;
     margin: 5px;
 }
@@ -327,7 +329,7 @@ nav ul li:hover ul.dropdown {
 }
 
 .suggestions-box {
-   
+
     position: absolute;
     background-color: white;
     border: 1px solid #ccc;
@@ -376,13 +378,13 @@ nav ul li:hover ul.dropdown {
     font-size: xx-large;
     font-weight: 100;
     display: block;
-   
+
     justify-content: center;
-   
+
     align-items: center;
-   
+
     margin: auto;
-   
+
 }
 
 .cart-item {
@@ -493,7 +495,7 @@ table th {
     color: #fff;
     font-size: .85em;
     letter-spacing: .1em;
-    text-transform: uppercase;
+    /*text-transform: uppercase;*/
 }
 
 table td {
@@ -511,7 +513,8 @@ tbody {
     width: 100%;
 }
 
-thead, tbody tr {
+thead,
+tbody tr {
     display: table;
     width: 100%;
     table-layout: fixed;
