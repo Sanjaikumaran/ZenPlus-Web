@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import json
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -55,6 +56,8 @@ class Handler(QObject):
     add_item = pyqtSignal(str, dict)
     update_item = pyqtSignal(str, dict, dict)
     remove_item = pyqtSignal(str, dict)
+    last_item = pyqtSignal(str, str)
+    select_item = pyqtSignal(str, str, dict)
 
     def __init__(self, browser):
         super().__init__()
@@ -65,15 +68,19 @@ class Handler(QObject):
     def loadTable(self, table_name):
         columns = ""
         if table_name == "Products":
-            columns = "SNo,ProductID,ProductName,Timestamp,ShopID,Brand,CostPrice,SellingPrice,MRP,Discount,CurrentStock,HistoryStock,SoldStock,GST"
+            columns = "SNo,ProductID,ProductName,Timestamp,Brand,CostPrice,SellingPrice,MRP,Discount,CurrentStock,HistoryStock,SoldStock,GST"
         elif table_name == "Customers":
-            columns = "SNo,CustomerID,Timestamp,ShopID,FirstName,LastName,Email,Phone,Address,City,Country"
+            columns = "SNo,CustomerID,Timestamp,FirstName,LastName,Email,Phone,Address,City,Country"
         elif table_name == "Employees":
-            columns = "SNo,EmployeeID,ShopID,FirstName,LastName,Department,Position,Salary,Timestamp"
+            columns = (
+                "SNo,EmployeeID,FirstName,LastName,Department,Position,Salary,Timestamp"
+            )
         elif table_name == "Transactions":
-            columns = "SNo,TransactionID,CustomerID,EmployeeID,Timestamp,ShopID,Quantity,Discount,Tax,TotalPrice,NetSales,Profit,PaymentMethod,LocationID"
+            columns = "SNo,TransactionID,CustomerID,EmployeeID,Timestamp,Quantity,Discount,Tax,TotalPrice,NetSales,Profit,PaymentMethod,LocationID"
         elif table_name == "TransactionItems":
-            columns = "SNo,TransactionID,ProductID,ShopID,Quantity,Price,Discount,Amount,Taxes,Total"
+            columns = (
+                "SNo,TransactionID,ProductID,Quantity,Price,Discount,Amount,Taxes,Total"
+            )
         else:
             return
 
@@ -87,12 +94,14 @@ class Handler(QObject):
     @pyqtSlot(str, str)
     def addItem(self, table_name, columns_values_json):
         columns_values = json.loads(columns_values_json)
+
+        data = self.manager.list_items(table_name, "SNo")
+        columns_values["SNo"] = len(data) + 1
         result = self.manager.add_item(table_name, columns_values)
         if result:
-            # print("add")
+
             return "true"
         else:
-            # print("add not")
 
             return "false"
 
@@ -102,22 +111,20 @@ class Handler(QObject):
         condition = json.loads(where_clause)
         result = self.manager.update_item(table_name, condition, columns_values)
         if result:
-            # print("update")
 
             return "true"
 
         else:
-            # print("update not")
 
             return "false"
 
     @pyqtSlot(str, str)
     def removeItem(self, table_name, where_clause):
-        # columns_values = json.loads(columns_values_json)
-        #print(table_name)
+
         condition = json.loads(where_clause)
-        #print(condition)
-        result = self.manager.remove_item(table_name, condition)
+        if table_name == "Transactions":
+            result = self.manager.remove_item(table_name, condition)
+            result = self.manager.remove_item("TransactionItems", condition)
         if result:
 
             return "true"
@@ -125,6 +132,47 @@ class Handler(QObject):
         else:
 
             return "false"
+
+    @pyqtSlot(str, str)
+    def lastItem(self, table_name, column_name):
+
+        result = self.manager.get_last_item(table_name, column_name)
+
+        result = json.dumps(result[0])
+
+        self.browser.page().runJavaScript(f"handleDataFromPython({result})")
+
+        if result:
+
+            return result
+
+        else:
+
+            return "false"
+
+    @pyqtSlot(str, str, str)
+    def selectItem(self, table_name, column_name, where_clause):
+        try:
+            column_names = json.loads(column_name)
+            condition = json.loads(where_clause)
+            selling_price_list = []
+
+            for productId in condition:
+
+                result = self.manager.get_item(
+                    table_name, column_names, condition[productId]
+                )
+
+                if result and result[0]:
+                    selling_price_list.append(result[0][0])
+                else:
+                    print(f"No data found for ProductID: {condition[productId]}")
+            self.browser.page().runJavaScript(f"sellingPriceList({selling_price_list})")
+            return True
+
+        except Exception as e:
+            print(f"Error in selectItem: {str(e)}")
+            return None
 
 
 if __name__ == "__main__":
