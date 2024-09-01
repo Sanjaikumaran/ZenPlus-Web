@@ -1,0 +1,21 @@
+def get_printer_width(printer):
+    # Print a line of maximum length and count characters that fit
+    max_width = 0
+    test_line = "X" * 80  # Start with a large number of Xs
+
+    try:
+        printer.text(test_line + "\n")
+        printer.cut()
+        max_width = len(test_line)
+    except:
+        pass
+
+    return max_width
+
+
+if __name__ == "__main__":
+    from escpos.printer import Usb
+
+    printer = Usb(0x04B8, 0x0202)  # Replace with your printer's ID
+    width = get_printer_width(printer)
+    print(f"Printer Width: {width} characters")

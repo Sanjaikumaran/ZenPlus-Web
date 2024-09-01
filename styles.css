@@ -249,6 +249,76 @@ nav ul li:hover ul.dropdown {
 
 }
 
+#findBillDiv {
+    position: fixed;
+    top: 50px;
+    right: 50px;
+    display: flex;
+    align-items: center;
+    background-color: #f5f5f5;
+    /* Light grey for a soft background */
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    animation: slideDownFadeIn 0.5s ease forwards;
+}
+
+@keyframes slideDownFadeIn {
+    0% {
+        top: -100px;
+        opacity: 0;
+    }
+
+    100% {
+        top: 50px;
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+
+#findBill {
+    height: 24px;
+    padding: 6px;
+    border: none;
+    border-radius: 3px;
+    /*outline: none;*/
+    background-color: #ffffff;
+    /* White background for input */
+    color: #333;
+    /* Dark text color for contrast */
+    font-size: 14px;
+}
+
+#findBill:focus {
+    /*outline: 2px solid black;*/
+    background-color: #fffafa;
+    /* Slightly darker grey on focus */
+}
+
+#findBill::placeholder {
+    color: #888;
+    /* Medium grey for placeholder text */
+}
+
+#findBillBtn {
+    background-color: #5C509C;
+    /* Bright blue for the button */
+    color: white;
+    /* White text for contrast */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 5px;
+}
+
+#findBillBtn:hover {
+    background-color: #5446a5;
+    /* Darker blue on hover */
+}
+
 
 
 

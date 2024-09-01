@@ -97,7 +97,6 @@ function remove_Item(tableName, itemIdentifier) {
             itemIdentifier
           );
 
-          // Pass the tableName and itemIdentifier to the handler
           const result = await handler.removeItem(
             tableName,
             JSON.stringify(itemIdentifier)
@@ -133,29 +132,22 @@ function last_Item(tableName, columnName) {
         try {
           console.log("Calling handler.lastItem with:", tableName, columnName);
 
-          // Call the PyQt5 slot method 'lastItem' with tableName and columnName
           const result = await handler.lastItem(tableName, columnName);
 
-          //console.warn("Result from handler.lastItem:", result);
-
           if (result) {
-            //window.alert(result);
-
-            resolve(result); // Resolve the promise with the result
+            resolve(result);
           } else {
-            //console.warn("Result is null or undefined.");
-            //window.alert(result);/
-            resolve(false); // Resolve with false if result is null or undefined
+            resolve(false);
           }
         } catch (error) {
           console.error("Error during handler.lastItem call:", error);
-          reject(error); // Reject the promise with the error
+          reject(error);
         }
       } else {
         const errorMsg =
           "Handler or handler.lastItem is not defined or not a function.";
         console.error(errorMsg);
-        reject(new Error(errorMsg)); // Reject with an error if handler is undefined or invalid
+        reject(new Error(errorMsg));
       }
     });
   });
@@ -179,18 +171,84 @@ function select_Item(tableName, columns_values, where_clause) {
         }
       } else {
         console.error(
-          "Handler or handler.updateItem is not defined or not a function."
+          "Handler or handler.selectItem is not defined or not a function."
         );
         resolve(false);
       }
     });
   });
 }
+function find_Bill(tableName, columns_values, where_clause) {
+  return new Promise((resolve, reject) => {
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+      let handler = channel.objects.handler;
+
+      if (handler && typeof handler.findBill === "function") {
+        try {
+          const result = handler.findBill(
+            JSON.stringify(tableName),
+            columns_values,
+            JSON.stringify(where_clause)
+          );
+
+          if (result) {
+            console.log("findBill executed successfully.");
+            resolve(true);
+          } else {
+            console.warn("findBill execution returned false.");
+            resolve(false);
+          }
+        } catch (error) {
+          console.error("Error executing findBill:", error);
+          reject(error);
+        }
+      } else {
+        console.error(
+          "Handler or handler.findBill is not defined or not a function."
+        );
+        resolve(false);
+      }
+    });
+  });
+}
+function generate_Bill(items, bill_file) {
+  return new Promise((resolve, reject) => {
+    new QWebChannel(qt.webChannelTransport, async function (channel) {
+      let handler = channel.objects.handler;
+
+      if (handler && typeof handler.generateBill === "function") {
+        try {
+          console.warn("Calling handler.generateBill with:", items, bill_file);
+
+          const result = await handler.generateBill(
+            JSON.stringify(items),
+            bill_file
+          );
+
+          console.log("Result from handler.generateBill:", result);
+
+          if (result === "true") {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        } catch (error) {
+          console.error("Error during handler.generateBill call:", error);
+          reject(error);
+        }
+      } else {
+        const errorMsg =
+          "Handler or handler.generateBill is not defined or not a function.";
+        console.error(errorMsg);
+        reject(new Error(errorMsg));
+      }
+    });
+  });
+}
 function handleDataFromPython(tableData) {
   if (typeof tableData == "string") {
-    //window.alert("ds");
     transactionId = document.getElementById("bill-no");
-    //window.alert("sdf");
+
     if (transactionId) {
       transactionId.value =
         tableData.slice(0, 3) + String(Number(tableData.slice(3)) + 1);
@@ -201,7 +259,6 @@ function handleDataFromPython(tableData) {
     async function getLastRow() {
       try {
         await last_Item("Transactions", "TransactionID");
-        //window.alert(lastRow);
       } catch (error) {
         console.error("Error fetching the last row:", error);
         window.alert("An error occurred while fetching the last row.");
@@ -231,6 +288,7 @@ const totalTaxes = document.getElementById("total-taxes");
 const totalAmount = document.getElementById("total-amount");
 const holdBtn = document.getElementById("hold-btn");
 const printBtn = document.getElementById("print-btn");
+let customerExist = null;
 
 function updateClock() {
   const now = new Date();
@@ -261,7 +319,7 @@ function updateCartSummary() {
   cart.forEach((item) => {
     totalProductsCount += 1;
     totalQuantityCount += item.quantity;
-    totalPriceAmount += item.price * item.quantity;
+    totalPriceAmount += item.price * item.quantity - item.discount;
     totalDiscountAmount += item.discount;
     totalTaxesAmount += item.taxes;
     totalAmountValue += item.total;
@@ -334,9 +392,10 @@ function addItemToCart(
         <span>${existingItem.quantity}</span>
         <span>&#8377; ${existingItem.price.toFixed(2)}</span>
         <span>&#8377; ${existingItem.discount.toFixed(2)}</span>
-        <span>&#8377; ${(existingItem.price * existingItem.quantity).toFixed(
-          2
-        )}</span>
+        <span>&#8377; ${(
+          existingItem.price * existingItem.quantity -
+          existingItem.discount
+        ).toFixed(2)}</span>
         <span>&#8377; ${existingItem.taxes.toFixed(2)}</span>
         <span>&#8377; ${existingItem.total.toFixed(2)}</span>
         <span><button class="remove-btn">Remove</button></span>
@@ -361,14 +420,13 @@ function addItemToCart(
   } else {
     const taxes = (price - discount) * 0.05 * quantity;
     const total = price * quantity - discount * quantity + taxes;
-    discount = discount * quantity;
 
     const item = {
       productIdValue,
       productName,
       quantity: parseInt(quantity),
       price: parseFloat(price),
-      discount: parseFloat(discount),
+      discount: parseFloat(discount) * quantity,
       taxes: parseFloat(taxes),
       total: parseFloat(total),
     };
@@ -384,7 +442,9 @@ function addItemToCart(
         <span>${item.quantity}</span>
         <span>&#8377; ${item.price.toFixed(2)}</span>
         <span>&#8377; ${item.discount.toFixed(2)}</span>
-        <span>&#8377; ${(item.price * item.quantity).toFixed(2)}</span>
+        <span>&#8377; ${(item.price * item.quantity - item.discount).toFixed(
+          2
+        )}</span>
         <span>&#8377; ${item.taxes.toFixed(2)}</span>
         <span>&#8377; ${item.total.toFixed(2)}</span>
         <span><button class="remove-btn">Remove</button></span>
@@ -410,10 +470,11 @@ function addItemToCart(
 
   transactionItems[productIdValue] = {
     ProductID: productIdValue,
+    ProductName: productName,
     Quantity: parseInt(quantity),
     Price: parseFloat(price),
-    Discount: parseFloat(discount),
-    Amount: price * quantity,
+    Discount: parseFloat(discount) * quantity,
+    Amount: price * quantity - discount * quantity,
     Taxes: parseFloat((price - discount) * 0.05 * quantity),
     Total:
       price * quantity -
@@ -534,37 +595,50 @@ if (printBtn) {
       Country: "text",
       PaymentMethod: ["UPI", "Cash", "Card"],
     };
-
+    closeFindBill();
     const modalName = "Customer Details";
-    //setTimeout(() => {
-    select_Item("Products", "CostPrice", productIds);
-    //}, 200);
-    createModal(modalName, headers, null);
+
+    if (productIds[0] !== undefined) {
+      select_Item("Products", "CostPrice", productIds);
+      createModal(modalName, headers, customerExist, null);
+    } else {
+      alert("Your Cart is Empty!!!");
+    }
   });
 }
 
 document.addEventListener("keydown", function (event) {
-  let modalExist = document.getElementById("modal");
+  const modalExist = document.getElementById("modal");
+  const findBillExist = document.getElementById("findBill");
 
   if (event.key === "Enter") {
     event.preventDefault();
+
     if (modalExist) {
       document.getElementById("save-btn").click();
+    } else if (document.activeElement === findBillExist) {
+      document.getElementById("findBillBtn").click();
     } else {
-      const product = productDetails.value;
-      const quantity = quantityInput.value;
-      const discount = discountInput.value;
-      const price = priceInput.value;
-      if (product && quantity && discount && price) {
-        addItemBtn.click();
+      if (productDetails.value) {
+        const product = productDetails.value;
+        const quantity = quantityInput.value;
+        const discount = discountInput.value;
+        const price = priceInput.value;
+
+        if (product && quantity && discount && price) {
+          addItemBtn.click();
+        }
       }
     }
   }
 
   if (event.key === "Escape") {
-    let modalExist = document.getElementById("modal");
+    const findBillExist = document.getElementById("findBillDiv");
+
     if (modalExist) {
       modalExist.remove();
+    } else if (findBillExist) {
+      closeFindBill();
     } else {
       clearCartBtn.click();
     }
@@ -575,11 +649,18 @@ document.addEventListener("keydown", function (event) {
   }
   if (event.ctrlKey && event.key === "p") {
     event.preventDefault();
+
     printBtn.click();
+  }
+  if (event.ctrlKey && event.key === "f") {
+    event.preventDefault();
+
+    createFindBill();
   }
 });
 
 const addBtn = document.getElementById("add-btn");
+const editBtn = document.getElementById("edit-btn");
 const searchInput = document.getElementById("search");
 const tbodySelector = document.querySelector("#dataTable tbody");
 
@@ -589,7 +670,6 @@ function renderTableRows(filteredData) {
   tbody.innerHTML = "";
   filteredData.forEach((rowData, index) => {
     const row = document.createElement("tr");
-    //row.setAttribute("data-tooltip", "Double click to edit");
 
     row.setAttribute("data-index", index);
     headers.forEach((header) => {
@@ -597,12 +677,11 @@ function renderTableRows(filteredData) {
       td.textContent = rowData[header] || "";
 
       row.appendChild(td);
-      //td.addEventListener("mouseover", () => {
-      //  console.warn(rowData[header]);
-      //});
     });
     tbody.appendChild(row);
   });
+  tbody.scrollTop = tbody.scrollHeight;
+
   document.getElementById("total-rows").textContent = filteredData.length;
 }
 function initializeTable(data) {
@@ -688,11 +767,16 @@ if (addBtn) {
       headerValues[header] = "text";
     });
 
-    createModal("Add Record", headerValues, null);
+    createModal("Add Record", headerValues, null, null);
+  });
+}
+if (editBtn) {
+  editBtn.addEventListener("click", () => {
+    window.alert("Double Click on the Row that you want to edit!");
   });
 }
 if (removeRowBtn) {
-  let Flag = false; // Toggle this as needed
+  let Flag = false;
 
   removeRowBtn.addEventListener("click", async () => {
     const table = document.getElementById("dataTable");
@@ -701,19 +785,16 @@ if (removeRowBtn) {
     const cols = thead.querySelector("tr");
 
     if (Flag) {
-      // Collect column headers
       const columnHeaders = Array.from(thead.querySelectorAll("th")).map((th) =>
         th.textContent.trim()
       );
 
-      // Check if any checkboxes are checked
       const selectedRows = [];
       tbody.querySelectorAll("tr").forEach((row) => {
         const checkbox = row.querySelector(
           "td.select-cell input[type='checkbox']"
         );
         if (checkbox && checkbox.checked) {
-          // Collect cell values and create an object
           const rowData = {};
           row.querySelectorAll("td").forEach((cell, index) => {
             if (columnHeaders[index]) {
@@ -724,7 +805,6 @@ if (removeRowBtn) {
         }
       });
 
-      // Show selected rows as JSON and confirm deletion
       if (selectedRows.length > 0) {
         const data = JSON.parse(localStorage.getItem("tableData"));
         if (data && data.tableName) {
@@ -733,25 +813,21 @@ if (removeRowBtn) {
               `All the data or transaction related to this data will be deleted!\bAre you sure you want to delete ${selectedRows.length} row(s)?`
             )
           ) {
-            // Use await to handle async operation
             for (const rowData of selectedRows) {
-              // Assume we're removing based on the first column
               const columnName = Object.keys(rowData)[1];
               const condition = { [columnName]: rowData[columnName] };
               await remove_Item(data.tableName, condition);
             }
 
-            // Remove rows from the frontend
             tbody.querySelectorAll("tr").forEach((row) => {
               const checkbox = row.querySelector(
                 "td.select-cell input[type='checkbox']"
               );
               if (checkbox && checkbox.checked) {
-                row.remove(); // Remove the row from the table
+                row.remove();
               }
             });
 
-            // Remove the "Select" header and checkboxes from rows
             if (cols.querySelectorAll("th.select-header").length > 0) {
               const selectHeader = cols.querySelector("th.select-header");
               selectHeader.remove();
@@ -766,7 +842,6 @@ if (removeRowBtn) {
           }
         }
       } else {
-        // Remove the "Select" header and checkboxes from rows
         if (cols.querySelectorAll("th.select-header").length > 0) {
           const selectHeader = cols.querySelector("th.select-header");
           selectHeader.remove();
@@ -780,7 +855,6 @@ if (removeRowBtn) {
         }
       }
     } else {
-      // Add the "Select" header and checkboxes to each row
       const th = document.createElement("th");
       th.textContent = "Select";
       th.classList.add("select-header");
@@ -794,7 +868,6 @@ if (removeRowBtn) {
         td.appendChild(box);
         row.appendChild(td);
 
-        // Add click event listener to toggle checkbox
         row.addEventListener("click", () => {
           const checkbox = row.querySelector(
             "td.select-cell input[type='checkbox']"
@@ -813,42 +886,106 @@ if (removeRowBtn) {
 if (tbodySelector) {
   tbodySelector.addEventListener("dblclick", (e) => {
     if (e.target && e.target.nodeName === "TD") {
-      // Get the value from the second column (assuming columns start from 0)
-      const secondColumnValue = e.target.parentElement.children[1].textContent;
+      const secondColumnValue = e.target.parentElement.children[1].textContent.trim();
 
-      // Find the row data using the value in the second column
-      const rowData = data.find((row) => {
-        return row[headers[1]] === secondColumnValue;
+      const currentRowIndex = data.findIndex((row) => {
+        const rowValue = row[headers[1]]?.toString().trim();
+
+        return rowValue === secondColumnValue;
       });
 
-      if (rowData) {
+      if (currentRowIndex !== -1) {
         let headerValues = {};
         headers.forEach((header) => {
           headerValues[header] = "text";
         });
 
-        createModal("Edit Record", headerValues, rowData);
+        createModal(
+          "Edit Record",
+          headerValues,
+          data[currentRowIndex],
+          currentRowIndex
+        );
       } else {
         console.error("Row data not found for the specified value.");
       }
     }
   });
 }
-document.addEventListener("keydown", function (event) {
-  if (event.ctrlKey && event.key == "n") {
-    event.preventDefault();
 
-    addBtn.click();
+document.addEventListener("keydown", function (event) {
+  const modalExist = document.getElementById("modal");
+  if (event.ctrlKey && event.key == "n") {
+    if (!modalExist) {
+      event.preventDefault();
+
+      addBtn.click();
+    }
   } else if (event.altKey && event.key == "e") {
     event.preventDefault();
-
-    window.alert("Double Click on the Row that you want to edit!");
+    editBtn.click();
   } else if (event.key === "Delete") {
-    event.preventDefault();
+    if (!modalExist) {
+      event.preventDefault();
 
-    removeRowBtn.click();
+      removeRowBtn.click();
+    }
   }
 });
+function createFindBill() {
+  if (!document.getElementById("findBillDiv")) {
+    const findBillDiv = document.createElement("div");
+    findBillDiv.id = "findBillDiv";
+
+    const findBill = document.createElement("input");
+    findBill.name = "findBill";
+    findBill.id = "findBill";
+    findBill.placeholder = "Find Bill";
+
+    const findBillBtn = document.createElement("button");
+    findBillBtn.type = "button";
+    findBillBtn.id = "findBillBtn";
+    findBillBtn.setAttribute("data-tooltip", "Enter");
+    findBillBtn.textContent = "Search";
+    findBillBtn.addEventListener("click", () => {
+      const billNo = document.getElementById("findBill");
+
+      try {
+        const transactions = find_Bill(
+          ["Transactions", "TransactionItems", "Customers"],
+          "*",
+          { TransactionID: billNo.value }
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    });
+    const closeBtn = document.createElement("span");
+    closeBtn.id = "close-btn";
+    closeBtn.className = "close-btn";
+
+    closeBtn.innerHTML = "&times";
+
+    closeBtn.addEventListener("click", () => {
+      findBillDiv.remove();
+      localStorage.clear();
+    });
+
+    findBillDiv.appendChild(findBill);
+    findBillDiv.appendChild(findBillBtn);
+    findBillDiv.appendChild(closeBtn);
+    document.body.appendChild(findBillDiv);
+    findBill.focus();
+  } else {
+    document.getElementById("findBill").focus();
+  }
+}
+function closeFindBill() {
+  const closeBtn = document.getElementById("close-btn");
+  if (closeBtn) {
+    closeBtn.click();
+  }
+}
 function handleClick(event) {
   if (event.target.tagName === "LI") {
     const ulId = event.target.parentElement.id;
@@ -859,20 +996,23 @@ function handleClick(event) {
     if (ulId) {
       let dataExist = JSON.parse(localStorage.getItem("tableData"));
 
-      if (!dataExist || dataExist.tableName != ulId) {
-        //console.warn(ulId);
+      if (!dataExist || dataExist.tableName !== ulId) {
         let data = {
           tableName: ulId,
           index: liIndex,
         };
-        if (ulId == "File") {
-          data["tableName"] = "File";
+
+        if (ulId === "File") {
+          localStorage.setItem("tableData", JSON.stringify(data));
           window.location.href = "index.html";
         } else {
+          localStorage.setItem("tableData", JSON.stringify(data));
           window.location.href = "table.html";
         }
-        localStorage.setItem("tableData", JSON.stringify(data));
       } else {
+        if (liIndex === 2) {
+          createFindBill();
+        }
         console.log(
           "No changes required. The data already exists and matches."
         );
@@ -880,6 +1020,12 @@ function handleClick(event) {
     }
   }
 }
+window.onload = function () {
+  const listIndex = JSON.parse(localStorage.getItem("tableData"));
+  if (listIndex && listIndex.tableName === "File" && listIndex.index === 2) {
+    createFindBill();
+  }
+};
 
 document.addEventListener("click", handleClick);
 
@@ -910,7 +1056,7 @@ document.addEventListener("click", handleClick);
     }
   });
 
-  function createModal(modalName, headers, inputData) {
+  function createModal(modalName, headers, inputData, currentRowIndex) {
     const modal = document.createElement("div");
     modal.className = "modal";
     modal.id = "modal";
@@ -929,13 +1075,16 @@ document.addEventListener("click", handleClick);
 
     const saveBtn = document.createElement("button");
     saveBtn.id = "save-btn";
-    saveBtn.type = "button"; // Explicit button type
+    saveBtn.type = "button";
+    saveBtn.setAttribute("data-tooltip", "Enter");
     saveBtn.textContent = "Save";
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "close-btn";
     closeBtn.id = "cancel-btn";
-    closeBtn.type = "button"; // Explicit button type
+    closeBtn.type = "button";
+    closeBtn.setAttribute("data-tooltip", "Esc");
+
     closeBtn.textContent = "Close";
 
     formAction.appendChild(closeBtn);
@@ -966,7 +1115,7 @@ document.addEventListener("click", handleClick);
 
       input.name = header;
       if (inputData) {
-        input.value = inputData[header] || ""; // Handle undefined gracefully
+        input.value = inputData[header] || "";
       }
 
       modalForm.appendChild(label);
@@ -987,29 +1136,53 @@ document.addEventListener("click", handleClick);
       formData.forEach((value, key) => {
         rowData[key] = value;
       });
-      //console.warn(rowData["PaymentMethod"]);
 
       let resultAction = "in";
 
       if (modalName === "Customer Details") {
         try {
+          transaction["CustomerID"] = rowData["Phone"];
+
+          transaction["PaymentMethod"] = rowData["PaymentMethod"];
+          delete rowData["PaymentMethod"];
+          rowData["CustomerID"] = rowData["Phone"];
+          if (customerExist) {
+            await update_Item(
+              "Customers",
+              { Phone: rowData["Phone"] },
+              rowData
+            );
+            await remove_Item("Transactions", {
+              TransactionID: transaction["TransactionID"],
+            });
+          } else {
+            //await add_Item("Customers", rowData);
+          }
           const now = new Date();
           const timestamp = now.toISOString().slice(0, 19).replace("T", " ");
           transaction["Timestamp"] = rowData["Timestamp"] = timestamp;
-          transaction["CustomerID"] = rowData["Phone"];
-          //console.warn(rowData["PaymentMethod"]);
 
-          transaction["PaymentMethod"] = rowData["PaymentMethod"];
+          //await add_Item("Transactions", transaction);
 
-          //console.warn("f", transaction["Profit"]);
-
-          await add_Item("Transactions", transaction);
-          delete rowData["PaymentMethod"];
-          rowData["CustomerID"] = rowData["Phone"];
-          await add_Item("Customers", rowData);
+          let bill = {};
+         
+           Object.keys(transactionItems).forEach((key) => {
+            console.warn(key);
+          });
+          Object.keys(transactionItems).forEach((key) => {
+            let item = transactionItems[key];
+            bill[item.ProductID] = {
+              ProductName: item.ProductName,
+              Quantity: item.Quantity,
+              Price: item.Price,
+              Tax: item.Taxes,
+              Total: item.Total,
+            };
+          });
           for (const transactionItem of Object.values(transactionItems)) {
             transactionItem.TransactionID = transaction.TransactionID;
-            await add_Item("TransactionItems", transactionItem);
+            //await add_Item("TransactionItems", transactionItem);
+            await generate_Bill(bill, "bill.txt");
           }
 
           resultAction = "Printed";
@@ -1054,8 +1227,48 @@ document.addEventListener("click", handleClick);
       modal.remove();
       setTimeout(() => {
         window.alert(resultAction);
-        clearCartBtn.click();
+        if (clearCartBtn) {
+          clearCartBtn.click();
+        }
       }, 300);
     });
+  }
+}
+
+function findBillData(data) {
+  if (data && data.length > 0) {
+    if (data[0] && data[0].length > 0) {
+      transactionId.value = data[0][0][3];
+    }
+
+    if (data[1] && data[1].length > 0) {
+      data[1].forEach((product, index) => {
+        addItemToCart(
+          data[3][index][0][0],
+          product[3],
+          product[4],
+          product[6],
+          product[5]
+        );
+      });
+    }
+
+    if (data[2] && data[2].length > 0) {
+      const headers = [
+        "FirstName",
+        "LastName",
+        "Email",
+        "Phone",
+        "Address",
+        "City",
+        "Country",
+        "PaymentMethod",
+      ];
+      customerExist = {};
+      headers.forEach((val, index) => {
+        customerExist[val] = data[2][0][index + 4];
+      });
+      customerExist["PaymentMethod"] = "UPI";
+    }
   }
 }
