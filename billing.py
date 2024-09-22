@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("HTML, CSS, and JavaScript in PyQt")
+        self.setWindowTitle("Zen Plus")
 
         self.browser = QWebEngineView()
 
@@ -171,7 +171,6 @@ class Handler(QObject):
                     selling_price_list.append(result[0][0])
                 else:
                     print(f"No data found for ProductID: {condition[productId]}")
-            print(selling_price_list)
             self.browser.page().runJavaScript(f"sellingPriceList({selling_price_list})")
             return True
 
@@ -222,46 +221,73 @@ class Handler(QObject):
     @pyqtSlot(str, str)
     def generateBill(self, items, bill_file):
         items = json.loads(items)
-        print(items)
 
-        # Create a simple bill header
-        header = "=======================================\n"
-        header += "            Zen Plus Recipt            \n"
-        header += "=======================================\n"
-        header += f"Date: {datetime.now().strftime('%d-%m-%Y')} Time: {datetime.now().strftime('%H:%M:%S')}\n"
-        header += "=======================================\n"
+        # Function to center text
+        def center_text(text, width=48):
+            return text.center(width)
+
+        # Function to format item lines
+        def format_item_line(name, price, quantity, amount, item_total):
+            return f"{name:<8} {price:>8.2f} {quantity:>5} {amount:>11.2f} {item_total:>8.2f}\n"
+
+        # Header section
+        header = center_text("================================================") + "\n"
+        header += center_text("Zen Plus Receipt") + "\n"
+        header += center_text("================================================") + "\n"
+        header += (
+            center_text(
+                f"Date: {datetime.now().strftime('%d-%m-%Y')}  Time: {datetime.now().strftime('%H:%M:%S')}"
+            )
+            + "\n"
+        )
+        header += center_text("------------------------------------------------") + "\n"
+        header += (
+            f"{'Name':<8} {'Price':>8} {'Quantity':>5} {'Amount':>8} {'Total':>8}\n"
+        )
+        header += center_text("------------------------------------------------") + "\n"
 
         # Add items
         item_lines = ""
         total = tax = 0
         for item in items:
-
             item = items[item]
             name = item["ProductName"]
             quantity = item["Quantity"]
             price = item["Price"]
+            amount = price - item["Discount"] / quantity
             tax += item["Tax"]
-            item_total = item["Total"]
+            item_total = quantity * amount
             total += item_total
-            item_lines += f"{name:20} {quantity} x ${price:.2f} = ${item_total:.2f}\n"
+
+            # Format each item line
+            item_lines += format_item_line(name, price, quantity, amount, item_total)
 
         # Footer with total
-        footer = "============================\n"
-        footer += f"Total: ${total:.2f}   Tax: ${tax:.2f}\n"
-        footer += "============================\n"
-        footer += "   Thank you for shopping!  \n"
-        footer += "============================\n"
+        footer = center_text("================================================") + "\n"
+        footer += (
+            center_text(
+                f"Amount: {total:.2f}  Tax: {tax:.2f}  Total: {total + tax:.2f}"
+            )
+            + "\n"
+        )
+        footer += center_text("================================================") + "\n"
+        footer += center_text("Thank you for shopping!") + "\n"
+        footer += center_text("================================================") + "\n"
 
-        # Write to a file
-        print(header, item_lines, footer)
+        # Combine the receipt sections
+        receipt = header + item_lines + footer
+
+        # Write to a file in binary mode to handle encoding properly
         with open(bill_file, "wb") as file:
-            # Write the content
-            file.write(header.encode("utf-8"))
-            file.write(item_lines.encode("utf-8"))
-            file.write(footer.encode("utf-8"))
+            file.write(receipt.encode("utf-8"))
+
+        # Print the bill dynamically
+        self.print_bill_dynamic(bill_file)
 
     def print_bill_dynamic(self, bill_file):
         system_name = platform.system()
+        FEED_PAPER = b"\x1B\x64\x05"  # Feed 5 lines (adjust the number as needed)
+        CUT_PAPER = b"\x1D\x56\x41\x00"  # Full cut command
 
         # Determine printer command and device
         if system_name == "Windows":
@@ -282,7 +308,6 @@ class Handler(QObject):
                         win32print.WritePrinter(hPrinter, f.read())
 
                     # Send the feed and cut commands
-                    win32print.WritePrinter(hPrinter, FEED_PAPER)
                     win32print.WritePrinter(hPrinter, CUT_PAPER)
 
                     win32print.EndPagePrinter(hPrinter)
@@ -296,18 +321,28 @@ class Handler(QObject):
             # macOS: Use lp command
             subprocess.run(["lp", bill_file])
             # Feed paper and cut command (macOS specifics may vary)
-            subprocess.run(["lp", "-o", "raw"], input=FEED_PAPER + CUT_PAPER)
+            subprocess.run(["lp", "-o", "raw"], input=CUT_PAPER)
 
         elif system_name == "Linux":
-            # Linux: Use lpr command
-            subprocess.run(["lpr", bill_file])
-            # Feed paper and cut command
-            with open("/dev/usb/lp0", "wb") as printer:
-                with open(bill_file, "rb") as bill:
-                    printer.write(bill.read())
-                # Send feed and cut commands
-                # printer.write(FEED_PAPER)
-                printer.write(CUT_PAPER)
+            # Linux: Check if /dev/usb/lp0 exists and has the correct permissions
+            printer_path = "/dev/usb/lp0"
+
+            if os.path.exists(printer_path):
+                # Check current permissions
+                current_permissions = oct(os.stat(printer_path).st_mode & 0o777)
+                if current_permissions != "0o666":
+                    # Change permissions to 666
+                    subprocess.run(["sudo", "chmod", "666", printer_path])
+
+                # Print the bill and cut paper
+                with open(printer_path, "wb") as printer:
+                    with open(bill_file, "rb") as bill:
+                        printer.write(bill.read())
+
+                    # Send the cut paper command
+                    printer.write(CUT_PAPER)
+            else:
+                print(f"Error: Printer device {printer_path} not found.")
         else:
             print(f"Printing is not supported on {system_name}.")
 

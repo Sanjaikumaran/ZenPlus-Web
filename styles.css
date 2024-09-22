@@ -80,7 +80,7 @@ input[type=number] {
     -moz-appearance: textfield;
 }
 
-
+/* Main menu */
 nav ul {
     list-style-type: none;
     padding: 0;
@@ -88,39 +88,70 @@ nav ul {
     position: relative;
 }
 
+/* Top-level list items */
 nav ul li {
     display: inline-block;
     position: relative;
-    padding: 4px 10px;
+    padding: 10px;
     cursor: pointer;
 }
 
+/* Hover effect for top-level items */
 nav ul li:hover {
     background-color: #ececec;
 }
 
+/* Dropdown (hidden by default) */
 nav ul li ul.dropdown {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
+    background-color: white;
     list-style-type: none;
     padding: 0;
     margin: 0;
-    background-color: white;
     box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
     z-index: 1000;
 }
 
+/* Dropdown items */
 nav ul li ul.dropdown li {
+    padding: 10px;
     display: block;
-    padding: 4px 10px;
-    border-bottom: 1px solid rgb(221, 221, 221);
     white-space: nowrap;
+    /* Prevent text from wrapping */
+    border-width: 100%;
+    border-bottom: 1px solid #ddd;
 }
 
-nav ul li:hover ul.dropdown {
+/* Show dropdown on hover */
+nav ul li:hover>ul.dropdown {
     display: block;
+}
+
+/* Nested dropdown (second-level) */
+nav ul li ul.dropdown li ul.dropdown {
+    display: none;
+    /* Hide the second-level dropdown */
+    position: absolute;
+    top: 0;
+    left: 100%;
+    /* Position the second dropdown to the right of its parent */
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Show nested dropdown on hover */
+nav ul li ul.dropdown li:hover>ul.dropdown {
+    display: block;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Styling for dropdown items on hover */
+nav ul li ul.dropdown li:hover {
+    background-color: #f0f0f0;
 }
 
 
@@ -486,10 +517,6 @@ nav ul li:hover ul.dropdown {
     border-radius: 5px;
     cursor: pointer;
 }
-
-
-
-
 
 
 

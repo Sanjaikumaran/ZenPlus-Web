@@ -3,7 +3,7 @@ let productList = [],
   transaction = {},
   transactionItems = {};
 let productIds = {};
-
+let holdedBills = [];
 let handler, headers, transactionId;
 
 function load_Table(tableName, columns) {
@@ -218,7 +218,7 @@ function generate_Bill(items, bill_file) {
 
       if (handler && typeof handler.generateBill === "function") {
         try {
-          console.warn("Calling handler.generateBill with:", items, bill_file);
+          //console.warn("Calling handler.generateBill with:", items, bill_file);
 
           const result = await handler.generateBill(
             JSON.stringify(items),
@@ -288,6 +288,8 @@ const totalTaxes = document.getElementById("total-taxes");
 const totalAmount = document.getElementById("total-amount");
 const holdBtn = document.getElementById("hold-btn");
 const printBtn = document.getElementById("print-btn");
+
+const holdedBillsUl = document.getElementById("holdedBills");
 let customerExist = null;
 
 function updateClock() {
@@ -353,7 +355,6 @@ function sellingPriceList(data) {
     transaction["Profit"] += item.total - data[index] * item.quantity;
   });
 }
-
 function addItemToCart(
   productDetails,
   productIdValue,
@@ -369,14 +370,24 @@ function addItemToCart(
     productId,
     productBrand,
   ] = productDetails.split(",");
+
   let existingItem = cart.find(
     (cartItem) => cartItem.productIdValue === productIdValue
   );
 
+  // Parse and calculate
+  let itemQuantity = parseInt(quantity, 10);
+  let itemPrice = parseFloat(price);
+  let itemDiscount = parseFloat(discount) * itemQuantity;
+  let itemTaxes =
+    (itemPrice - itemDiscount / itemQuantity) * 0.05 * itemQuantity;
+  let itemTotal = itemPrice * itemQuantity - itemDiscount + itemTaxes;
+
   if (existingItem) {
-    existingItem.quantity += parseInt(quantity);
-    existingItem.discount += parseFloat(discount) * quantity;
-    existingItem.taxes += (price - discount) * 0.05 * quantity;
+    // Update existing item
+    existingItem.quantity += itemQuantity;
+    existingItem.discount += itemDiscount;
+    existingItem.taxes += itemTaxes;
     existingItem.total =
       existingItem.price * existingItem.quantity -
       existingItem.discount +
@@ -400,7 +411,10 @@ function addItemToCart(
         <span>&#8377; ${existingItem.total.toFixed(2)}</span>
         <span><button class="remove-btn">Remove</button></span>
       `;
-
+    itemQuantity = existingItem.quantity;
+    itemDiscount = existingItem.discount;
+    itemTaxes = existingItem.taxes;
+    itemTotal = existingItem.total;
     cartItemElement
       .querySelector(".remove-btn")
       .addEventListener("click", () => {
@@ -411,24 +425,20 @@ function addItemToCart(
         delete transactionItems[productIdValue];
 
         cartItemElement.remove();
-        if (cart.length == 0) {
+        if (cart.length === 0) {
           cartItems.appendChild(emptyCart);
         }
-
-        updateCartSummary();
       });
   } else {
-    const taxes = (price - discount) * 0.05 * quantity;
-    const total = price * quantity - discount * quantity + taxes;
-
+    // Add new item
     const item = {
       productIdValue,
       productName,
-      quantity: parseInt(quantity),
-      price: parseFloat(price),
-      discount: parseFloat(discount) * quantity,
-      taxes: parseFloat(taxes),
-      total: parseFloat(total),
+      quantity: itemQuantity,
+      price: itemPrice,
+      discount: itemDiscount,
+      taxes: itemTaxes,
+      total: itemTotal,
     };
 
     cart.push(item);
@@ -460,26 +470,20 @@ function addItemToCart(
       delete transactionItems[productIdValue];
 
       cartItem.remove();
-      if (cart.length == 0) {
+      if (cart.length === 0) {
         cartItems.appendChild(emptyCart);
       }
-
-      updateCartSummary();
-    });
+    }); // Update transactionItems for both new and existing items
   }
-
   transactionItems[productIdValue] = {
     ProductID: productIdValue,
     ProductName: productName,
-    Quantity: parseInt(quantity),
-    Price: parseFloat(price),
-    Discount: parseFloat(discount) * quantity,
-    Amount: price * quantity - discount * quantity,
-    Taxes: parseFloat((price - discount) * 0.05 * quantity),
-    Total:
-      price * quantity -
-      discount * quantity +
-      (price - discount) * 0.05 * quantity,
+    Quantity: itemQuantity,
+    Price: itemPrice,
+    Discount: itemDiscount,
+    Taxes: itemTaxes,
+    Amount: itemPrice * itemQuantity - itemDiscount,
+    Total: itemTotal,
   };
 
   updateCartSummary();
@@ -574,13 +578,45 @@ if (clearCartBtn) {
     cart = [];
     cartItems.innerHTML = "";
     cartItems.appendChild(emptyCart);
+    transactionItems = {};
     updateCartSummary();
+    //productIds[0] = undefined;8531
+    
   });
 }
 
 if (holdBtn) {
   holdBtn.addEventListener("click", () => {
-    console.log("holded");
+    // Ask for confirmation
+    const userConfirmed = confirm(
+      "Are you sure you want to hold the current items?"
+    );
+
+    if (userConfirmed) {
+      console.warn("holded");
+
+      if (productIds[0] !== undefined) {
+        holdedBills.push(transactionItems);
+
+        // Clear existing items in the holdedBills list
+        holdedBillsUl.innerHTML = "";
+
+        // Append new <li> elements to the <ul>
+        for (let i = 0; i < holdedBills.length; i++) {
+          const li = document.createElement("li");
+          li.textContent = "Holded Bill " + (i + 1); // Display "Holded Bill 1", "Holded Bill 2", etc.
+          holdedBillsUl.appendChild(li);
+        }
+
+        // Click the clear cart button
+        clearCartBtn.click();
+      } else {
+        alert("Your Cart is Empty!!!");
+      }
+    } else {
+      // User clicked "Cancel" or did not confirm, so do nothing
+      console.log("Action canceled by the user.");
+    }
   });
 }
 if (printBtn) {
@@ -645,7 +681,7 @@ document.addEventListener("keydown", function (event) {
   }
   if (event.ctrlKey && event.key === "h") {
     event.preventDefault();
-    console.log("Holded");
+    holdBtn.click();
   }
   if (event.ctrlKey && event.key === "p") {
     event.preventDefault();
@@ -988,34 +1024,74 @@ function closeFindBill() {
 }
 function handleClick(event) {
   if (event.target.tagName === "LI") {
-    const ulId = event.target.parentElement.id;
-
-    const liIndex =
-      Array.from(event.target.parentElement.children).indexOf(event.target) + 1;
-
-    if (ulId) {
-      let dataExist = JSON.parse(localStorage.getItem("tableData"));
-
-      if (!dataExist || dataExist.tableName !== ulId) {
-        let data = {
-          tableName: ulId,
-          index: liIndex,
-        };
-
-        if (ulId === "File") {
-          localStorage.setItem("tableData", JSON.stringify(data));
-          window.location.href = "index.html";
-        } else {
-          localStorage.setItem("tableData", JSON.stringify(data));
-          window.location.href = "table.html";
-        }
-      } else {
-        if (liIndex === 2) {
-          createFindBill();
-        }
-        console.log(
-          "No changes required. The data already exists and matches."
+    if (
+      event.target.tagName === "LI" &&
+      event.target.parentElement.id === "holdedBills"
+    ) {
+      if (productIds[0] !== undefined) {
+        var confirmation = confirm(
+          "Are you sure you want to proceed with this action?"
         );
+      }
+      if (confirmation) {
+        clearCartBtn.click();
+        // Proceed with adding the holded bill to the cart
+        const items = Array.from(event.target.parentElement.children);
+
+        // Find the index of the clicked <li> item
+        const index = items.indexOf(event.target);
+
+        // Check if the index is valid
+        if (index >= 0 && index < holdedBills.length) {
+          //console.warn("Clicked item index:", index);
+
+          // Retrieve the clicked item's details from holdedBills
+          Object.keys(holdedBills[index]).forEach((key) => {
+            const itemDetails = holdedBills[index][key];
+            //console.warn(JSON.stringify(itemDetails));
+
+            // Add the item to the cart
+            addItemToCart(
+              `${itemDetails.ProductName},,,`, // Assuming productDetails format
+              itemDetails.ProductID,
+              itemDetails.Quantity,
+              itemDetails.Discount / itemDetails.Quantity,
+              itemDetails.Price
+            );
+          });
+        }
+      }
+    } else {
+      const ulId = event.target.parentElement.id;
+
+      const liIndex =
+        Array.from(event.target.parentElement.children).indexOf(event.target) +
+        1;
+
+      if (ulId) {
+        let dataExist = JSON.parse(localStorage.getItem("tableData"));
+
+        if (!dataExist || dataExist.tableName !== ulId) {
+          let data = {
+            tableName: ulId,
+            index: liIndex,
+          };
+
+          if (ulId === "File") {
+            localStorage.setItem("tableData", JSON.stringify(data));
+            window.location.href = "index.html";
+          } else {
+            localStorage.setItem("tableData", JSON.stringify(data));
+            window.location.href = "table.html";
+          }
+        } else {
+          if (liIndex === 2) {
+            createFindBill();
+          }
+          console.log(
+            "No changes required. The data already exists and matches."
+          );
+        }
       }
     }
   }
@@ -1030,29 +1106,43 @@ window.onload = function () {
 document.addEventListener("click", handleClick);
 
 {
+  // Track the currently opened dropdown
+  let activeDropdown = null;
+
+  // Add click event to each top-level 'li'
   document.querySelectorAll("nav ul li").forEach((item) => {
     item.addEventListener("click", (event) => {
-      if (event.target.closest(".dropdown")) return;
+      // Prevent closing dropdown if clicking within the dropdown
+      if (event.target.closest("ul.dropdown")) return;
 
+      // Close the previously opened dropdown if different from the current one
       document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
         if (dropdown !== item.querySelector("ul.dropdown")) {
           dropdown.style.display = "none";
         }
       });
 
+      // Toggle the display of the current dropdown
       const dropdown = item.querySelector("ul.dropdown");
       if (dropdown) {
-        dropdown.style.display =
-          dropdown.style.display === "block" ? "none" : "block";
+        if (dropdown.style.display === "block") {
+          dropdown.style.display = "none";
+          activeDropdown = null;
+        } else {
+          dropdown.style.display = "block";
+          activeDropdown = dropdown;
+        }
       }
     });
   });
 
+  // Hide all dropdowns when clicking outside
   document.addEventListener("click", (event) => {
     if (!event.target.closest("nav")) {
       document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
-        dropdown.style.display = "none";
+        //dropdown.style.display = "none";
       });
+      activeDropdown = null;
     }
   });
 
@@ -1156,34 +1246,37 @@ document.addEventListener("click", handleClick);
               TransactionID: transaction["TransactionID"],
             });
           } else {
-            //await add_Item("Customers", rowData);
+            await add_Item("Customers", rowData);
           }
           const now = new Date();
           const timestamp = now.toISOString().slice(0, 19).replace("T", " ");
           transaction["Timestamp"] = rowData["Timestamp"] = timestamp;
 
-          //await add_Item("Transactions", transaction);
+          await add_Item("Transactions", transaction);
 
           let bill = {};
-         
-           Object.keys(transactionItems).forEach((key) => {
-            console.warn(key);
-          });
+
+          for (var member in bill) delete bill[member];
+
           Object.keys(transactionItems).forEach((key) => {
             let item = transactionItems[key];
             bill[item.ProductID] = {
               ProductName: item.ProductName,
               Quantity: item.Quantity,
+              Discount: item.Discount,
               Price: item.Price,
               Tax: item.Taxes,
               Total: item.Total,
+              Amount: item.Amount,
             };
           });
+
           for (const transactionItem of Object.values(transactionItems)) {
             transactionItem.TransactionID = transaction.TransactionID;
-            //await add_Item("TransactionItems", transactionItem);
-            await generate_Bill(bill, "bill.txt");
+            delete transactionItem["ProductName"];
+            await add_Item("TransactionItems", transactionItem);
           }
+          await generate_Bill(bill, "bill.txt");
 
           resultAction = "Printed";
           transactionId.value =
@@ -1230,6 +1323,7 @@ document.addEventListener("click", handleClick);
         if (clearCartBtn) {
           clearCartBtn.click();
         }
+        document.getElementById("product-details").focus();
       }, 300);
     });
   }

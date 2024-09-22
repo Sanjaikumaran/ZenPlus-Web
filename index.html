@@ -14,16 +14,18 @@
         <ul>
             <li>
                 File
-                <ul id="File" class="dropdown">
-
+                <ul class="dropdown">
                     <li>New</li>
-
                     <li>Find Bill</li>
                     <li>Save</li>
-                    <li>Holded Bills</li>
+                    <li>
+                        Holded Bills
+                        <ul id="holdedBills" class="dropdown">
+                            <li>Nothing Here...</li>
+
+                        </ul>
+                    </li>
                     <li>Quit</li>
-
-
                 </ul>
             </li>
 
@@ -103,8 +105,8 @@
             <label for="priceInput">Price:</label>
         </div>
         <div id="product-input">
-            <input type="text" placeholder="Product (Name,Price,ID,Brand)" id="product-details" autocomplete="off"
-                required>
+            <input type="text" onload="this.focus()" placeholder="Product (Name,Price,ID,Brand)" id="product-details"
+                autocomplete="off" required>
             <input type="number" placeholder="Quantity" id="quantityInput" autocomplete="off" required>
             <input type="number" placeholder="Discount" id="discountInput" autocomplete="off" required>
             <input type="number" placeholder="Price" id="priceInput" autocomplete="off" required>
@@ -150,7 +152,9 @@
     <script src="script.js"></script>
     <script>
         // Ensure the function runs when the document is ready
-
+        window.onload = function () {
+            document.getElementById('product-details').focus();
+        };
         document.addEventListener("DOMContentLoaded", function () {
 
             load_Table(
