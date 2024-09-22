@@ -580,14 +580,13 @@ if (clearCartBtn) {
     cartItems.appendChild(emptyCart);
     transactionItems = {};
     updateCartSummary();
-    //productIds[0] = undefined;8531
-    
+
+
   });
 }
 
 if (holdBtn) {
   holdBtn.addEventListener("click", () => {
-    // Ask for confirmation
     const userConfirmed = confirm(
       "Are you sure you want to hold the current items?"
     );
@@ -597,8 +596,6 @@ if (holdBtn) {
 
       if (productIds[0] !== undefined) {
         holdedBills.push(transactionItems);
-
-        // Clear existing items in the holdedBills list
         holdedBillsUl.innerHTML = "";
 
         // Append new <li> elements to the <ul>
