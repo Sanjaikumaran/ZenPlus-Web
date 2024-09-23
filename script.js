@@ -5,7 +5,7 @@ let productList = [],
 let productIds = {};
 let holdedBills = [];
 let handler, headers, transactionId;
-
+var holdFlag, indexOfH_Bill;
 function load_Table(tableName, columns) {
   new QWebChannel(qt.webChannelTransport, function (channel) {
     handler = channel.objects.handler;
@@ -580,8 +580,10 @@ if (clearCartBtn) {
     cartItems.appendChild(emptyCart);
     transactionItems = {};
     updateCartSummary();
-
-
+    if (holdFlag == "Added") {
+      removeHoldedBill(indexOfH_Bill);
+      holdFlag = "";
+    }
   });
 }
 
@@ -592,10 +594,12 @@ if (holdBtn) {
     );
 
     if (userConfirmed) {
-      console.warn("holded");
-
       if (productIds[0] !== undefined) {
         holdedBills.push(transactionItems);
+
+        // Store holded bills in localStorage
+        localStorage.setItem("holdedBills", JSON.stringify(holdedBills));
+
         holdedBillsUl.innerHTML = "";
 
         // Append new <li> elements to the <ul>
@@ -607,6 +611,11 @@ if (holdBtn) {
 
         // Click the clear cart button
         clearCartBtn.click();
+
+        if (holdFlag === "Added") {
+          removeHoldedBill(indexOfH_Bill);
+          holdFlag = "";
+        }
       } else {
         alert("Your Cart is Empty!!!");
       }
@@ -1019,46 +1028,73 @@ function closeFindBill() {
     closeBtn.click();
   }
 }
+function removeHoldedBill(index) {
+  // Remove the holded bill from the array
+  holdedBills.splice(index, 1);
+  
+  // Update localStorage after removing the bill
+  localStorage.setItem("holdedBills", JSON.stringify(holdedBills));
+
+  // Remove the corresponding <li> from the DOM
+  holdedBillsUl.children[index].remove();
+  
+  // If no more holded bills, display "Nothing Here..." message
+  if (holdedBillsUl.childElementCount === 0) {
+    const li = document.createElement("li");
+    li.textContent = "Nothing Here...";
+    holdedBillsUl.appendChild(li);
+  }
+}
+
 function handleClick(event) {
   if (event.target.tagName === "LI") {
-    if (
-      event.target.tagName === "LI" &&
-      event.target.parentElement.id === "holdedBills"
-    ) {
+    // Retrieve holdedBills from localStorage when needed
+    let holdedBills = JSON.parse(localStorage.getItem("holdedBills")) || [];
+
+    // Check if the clicked <li> is inside the #holdedBills element
+    if (event.target.parentElement.id === "holdedBills") {
+      // Check if there are products in the cart
       if (productIds[0] !== undefined) {
         var confirmation = confirm(
           "Are you sure you want to proceed with this action?"
         );
       }
+
+      // If user confirms, clear the cart and add holded items
       if (confirmation) {
+        // Clear the cart
         clearCartBtn.click();
-        // Proceed with adding the holded bill to the cart
+
+        // Get all <li> elements within the holdedBills list
         const items = Array.from(event.target.parentElement.children);
 
         // Find the index of the clicked <li> item
         const index = items.indexOf(event.target);
 
-        // Check if the index is valid
+        // Check if the index is valid and retrieve the selected holded bill
         if (index >= 0 && index < holdedBills.length) {
-          //console.warn("Clicked item index:", index);
-
-          // Retrieve the clicked item's details from holdedBills
+          // Iterate over the holded bill and add the items to the cart
           Object.keys(holdedBills[index]).forEach((key) => {
             const itemDetails = holdedBills[index][key];
-            //console.warn(JSON.stringify(itemDetails));
 
-            // Add the item to the cart
+            // Add each item to the cart using the addItemToCart function
             addItemToCart(
-              `${itemDetails.ProductName},,,`, // Assuming productDetails format
+              `${itemDetails.ProductName},,,`, // Assuming product details format
               itemDetails.ProductID,
               itemDetails.Quantity,
               itemDetails.Discount / itemDetails.Quantity,
               itemDetails.Price
             );
           });
+
+          // Set flags to indicate the hold action was successful
+          holdFlag = "Added";
+          indexOfH_Bill = index;
         }
       }
-    } else {
+    }
+    // Else condition to handle the other action with tables and localStorage
+    else {
       const ulId = event.target.parentElement.id;
 
       const liIndex =
@@ -1074,16 +1110,19 @@ function handleClick(event) {
             index: liIndex,
           };
 
+          // If the clicked list belongs to 'File', redirect to 'index.html'
           if (ulId === "File") {
             localStorage.setItem("tableData", JSON.stringify(data));
             window.location.href = "index.html";
           } else {
+            // Otherwise, store the data and redirect to 'table.html'
             localStorage.setItem("tableData", JSON.stringify(data));
             window.location.href = "table.html";
           }
         } else {
+          // If the data matches, do nothing or perform a specific action
           if (liIndex === 2) {
-            createFindBill();
+            createFindBill(); // Call createFindBill if the clicked index is 2
           }
           console.log(
             "No changes required. The data already exists and matches."
@@ -1093,6 +1132,7 @@ function handleClick(event) {
     }
   }
 }
+
 window.onload = function () {
   const listIndex = JSON.parse(localStorage.getItem("tableData"));
   if (listIndex && listIndex.tableName === "File" && listIndex.index === 2) {
@@ -1274,8 +1314,11 @@ document.addEventListener("click", handleClick);
             await add_Item("TransactionItems", transactionItem);
           }
           await generate_Bill(bill, "bill.txt");
-
+          if (holdFlag == "Added") {
+            removeHoldedBill(indexOfH_Bill);
+          }
           resultAction = "Printed";
+          holdFlag = "";
           transactionId.value =
             transactionId.value.slice(0, 3) +
             String(Number(transactionId.value.slice(3)) + 1);

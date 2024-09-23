@@ -282,7 +282,7 @@ class Handler(QObject):
             file.write(receipt.encode("utf-8"))
 
         # Print the bill dynamically
-        self.print_bill_dynamic(bill_file)
+        #self.print_bill_dynamic(bill_file)
 
     def print_bill_dynamic(self, bill_file):
         system_name = platform.system()

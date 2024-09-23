@@ -156,10 +156,32 @@
             document.getElementById('product-details').focus();
         };
         document.addEventListener("DOMContentLoaded", function () {
+            // Load table for "Products" when the DOM is fully loaded
+            load_Table("Products");
 
-            load_Table(
-                "Products"
-            );
+            // Retrieve holdedBills from localStorage
+            let holdedBills = JSON.parse(localStorage.getItem("holdedBills")) || [];
+
+            // Reference to the <ul> element where holded bills will be displayed
+            const holdedBillsUl = document.getElementById("holdedBills");
+
+            // Clear the existing list if any
+            holdedBillsUl.innerHTML = "";
+
+            // If there are holded bills, display them as <li> elements
+            if (holdedBills.length > 0) {
+                holdedBills.forEach((_, i) => {
+                    const li = document.createElement("li");
+                    li.textContent = "Holded Bill " + (i +
+                    1); // Display "Holded Bill 1", "Holded Bill 2", etc.
+                    holdedBillsUl.appendChild(li);
+                });
+            } else {
+                // If no holded bills, display a message saying "Nothing Here..."
+                const li = document.createElement("li");
+                li.textContent = "Nothing Here...";
+                holdedBillsUl.appendChild(li);
+            }
         });
     </script>
 
