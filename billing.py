@@ -58,6 +58,7 @@ class Handler(QObject):
         super().__init__()
         self.manager = operations_access.DataManagement()
         self.browser = browser
+        self.manager.main1()
 
     @pyqtSlot(str)
     def loadTable(self, table_name):

@@ -55,3 +55,6 @@ class DataManagement:
 
         else:
             return False
+
+    def main1(self):
+       operations.Operations().main()
