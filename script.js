@@ -1,11 +1,15 @@
 let productList = [],
   data = [],
   transaction = {},
-  transactionItems = {};
-let productIds = {};
-let holdedBills = [];
-let handler, headers, transactionId;
+  transactionItems = {},
+  productIds = {},
+  holdedBills = [],
+  handler,
+  headers,
+  transactionId,
+  modal_flag;
 var holdFlag, indexOfH_Bill;
+
 function load_Table(tableName, columns) {
   new QWebChannel(qt.webChannelTransport, function (channel) {
     handler = channel.objects.handler;
@@ -239,6 +243,64 @@ function generate_Bill(items, bill_file) {
       } else {
         const errorMsg =
           "Handler or handler.generateBill is not defined or not a function.";
+        console.error(errorMsg);
+        reject(new Error(errorMsg));
+      }
+    });
+  });
+}
+function reprint_Bill(bill_type, bill_no) {
+  return new Promise((resolve, reject) => {
+    new QWebChannel(qt.webChannelTransport, async function (channel) {
+      let handler = channel.objects.handler;
+
+      if (handler && typeof handler.reprintBill === "function") {
+        try {
+          const result = await handler.reprintBill(bill_type, bill_no);
+
+          console.log("Result from handler.reprintBill:", result);
+
+          if (result === "true") {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        } catch (error) {
+          console.error("Error during handler.reprintBill call:", error);
+          reject(error);
+        }
+      } else {
+        const errorMsg =
+          "Handler or handler.reprintBill is not defined or not a function.";
+        console.error(errorMsg);
+        reject(new Error(errorMsg));
+      }
+    });
+  });
+}
+function close_Window() {
+  return new Promise((resolve, reject) => {
+    new QWebChannel(qt.webChannelTransport, async function (channel) {
+      let handler = channel.objects.handler;
+
+      if (handler && typeof handler.closeWindow === "function") {
+        try {
+          const result = await handler.closeWindow();
+
+          console.log("Result from handler.closeWindow:", result);
+
+          if (result === "true") {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        } catch (error) {
+          console.error("Error during handler.closeWindow call:", error);
+          reject(error);
+        }
+      } else {
+        const errorMsg =
+          "Handler or handler.closeWindow is not defined or not a function.";
         console.error(errorMsg);
         reject(new Error(errorMsg));
       }
@@ -697,7 +759,7 @@ document.addEventListener("keydown", function (event) {
   if (event.ctrlKey && event.key === "f") {
     event.preventDefault();
 
-    createFindBill();
+    createFindBill("Search");
   }
 });
 
@@ -974,54 +1036,85 @@ document.addEventListener("keydown", function (event) {
     }
   }
 });
-function createFindBill() {
-  if (!document.getElementById("findBillDiv")) {
+
+
+function createFindBill(modal_type) {
+  // If modal_type is the same as the current modal_flag, do nothing
+  if (modal_type === modal_flag) {
+    return; // Do nothing if the modal type is the same
+  }
+
+  // If a modal exists and modal_type is different, close the existing modal
+  const existingModal = document.getElementById("findBillDiv");
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  // Proceed to create a new modal if on the index.html page
+  if (window.location.href.split("/").pop() === "index.html") {
+    // Create the modal only if modal_type is different from modal_flag
     const findBillDiv = document.createElement("div");
     findBillDiv.id = "findBillDiv";
 
     const findBill = document.createElement("input");
     findBill.name = "findBill";
     findBill.id = "findBill";
-    findBill.placeholder = "Find Bill";
+    findBill.placeholder = "Enter Bill No.";
 
     const findBillBtn = document.createElement("button");
     findBillBtn.type = "button";
     findBillBtn.id = "findBillBtn";
     findBillBtn.setAttribute("data-tooltip", "Enter");
-    findBillBtn.textContent = "Search";
+    findBillBtn.textContent = modal_type;
+
     findBillBtn.addEventListener("click", () => {
+      // Check if clearCartBtn exists and click it
+      if (typeof clearCartBtn !== "undefined" && clearCartBtn !== null) {
+        clearCartBtn.click();
+      }
+
       const billNo = document.getElementById("findBill");
 
       try {
-        const transactions = find_Bill(
-          ["Transactions", "TransactionItems", "Customers"],
-          "*",
-          { TransactionID: billNo.value }
-        );
+        if (modal_type === "Search") {
+          modal_flag = "Search"; // Set modal flag to 'Search'
+          const transactions = find_Bill(
+            ["Transactions", "TransactionItems", "Customers"],
+            "*",
+            { TransactionID: billNo.value }
+          );
+        } else {
+          modal_flag = "Reprint"; // Set modal flag to 'Reprint'
+
+          reprint_Bill("Find & Print", billNo.value);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     });
+
     const closeBtn = document.createElement("span");
     closeBtn.id = "close-btn";
     closeBtn.className = "close-btn";
-
-    closeBtn.innerHTML = "&times";
+    closeBtn.innerHTML = "&times;";
 
     closeBtn.addEventListener("click", () => {
       findBillDiv.remove();
-      localStorage.clear();
+      modal_flag = ""; // Reset modal_flag when the modal is closed
+
+      localStorage.removeItem("tableData"); // Clear only 'tableData'
     });
 
+    // Append input, button, and close button to the modal div
     findBillDiv.appendChild(findBill);
     findBillDiv.appendChild(findBillBtn);
     findBillDiv.appendChild(closeBtn);
     document.body.appendChild(findBillDiv);
-    findBill.focus();
-  } else {
-    document.getElementById("findBill").focus();
+
+    findBill.focus(); // Set focus on the input field
   }
 }
+
 function closeFindBill() {
   const closeBtn = document.getElementById("close-btn");
   if (closeBtn) {
@@ -1031,13 +1124,13 @@ function closeFindBill() {
 function removeHoldedBill(index) {
   // Remove the holded bill from the array
   holdedBills.splice(index, 1);
-  
+
   // Update localStorage after removing the bill
   localStorage.setItem("holdedBills", JSON.stringify(holdedBills));
 
   // Remove the corresponding <li> from the DOM
   holdedBillsUl.children[index].remove();
-  
+
   // If no more holded bills, display "Nothing Here..." message
   if (holdedBillsUl.childElementCount === 0) {
     const li = document.createElement("li");
@@ -1051,18 +1144,14 @@ function handleClick(event) {
     // Retrieve holdedBills from localStorage when needed
     let holdedBills = JSON.parse(localStorage.getItem("holdedBills")) || [];
 
-    // Check if the clicked <li> is inside the #holdedBills element
     if (event.target.parentElement.id === "holdedBills") {
-      // Check if there are products in the cart
       if (productIds[0] !== undefined) {
         var confirmation = confirm(
           "Are you sure you want to proceed with this action?"
         );
       }
 
-      // If user confirms, clear the cart and add holded items
       if (confirmation) {
-        // Clear the cart
         clearCartBtn.click();
 
         // Get all <li> elements within the holdedBills list
@@ -1092,9 +1181,18 @@ function handleClick(event) {
           indexOfH_Bill = index;
         }
       }
-    }
-    // Else condition to handle the other action with tables and localStorage
-    else {
+    } else if (event.target.parentElement.id === "reprint") {
+      const index = Array.prototype.indexOf.call(
+        event.target.parentElement.children,
+        event.target
+      );
+
+      if (index == 0) {
+        reprint_Bill("recent", "");
+      } else {
+        createFindBill("Reprint");
+      }
+    } else {
       const ulId = event.target.parentElement.id;
 
       const liIndex =
@@ -1104,16 +1202,28 @@ function handleClick(event) {
       if (ulId) {
         let dataExist = JSON.parse(localStorage.getItem("tableData"));
 
-        if (!dataExist || dataExist.tableName !== ulId) {
+        if (!dataExist || dataExist.tableName !== ulId || ulId == "File") {
           let data = {
             tableName: ulId,
             index: liIndex,
           };
 
-          // If the clicked list belongs to 'File', redirect to 'index.html'
-          if (ulId === "File") {
-            localStorage.setItem("tableData", JSON.stringify(data));
-            window.location.href = "index.html";
+          if (ulId == "File") {
+            if (liIndex !== 3 && liIndex !== 5 && liIndex !== 2) {
+              localStorage.setItem("tableData", JSON.stringify(data));
+              window.location.href = "index.html";
+            }
+            if (liIndex == 2 && ulId == "File") {
+              createFindBill("Search");
+            }
+            if (liIndex == 5) {
+              const userConfirmed = confirm(
+                "Are you sure you want to close the application?"
+              );
+              if (userConfirmed) {
+                close_Window();
+              }
+            }
           } else {
             // Otherwise, store the data and redirect to 'table.html'
             localStorage.setItem("tableData", JSON.stringify(data));
@@ -1122,7 +1232,7 @@ function handleClick(event) {
         } else {
           // If the data matches, do nothing or perform a specific action
           if (liIndex === 2) {
-            createFindBill(); // Call createFindBill if the clicked index is 2
+            createFindBill("Search"); // Call createFindBill if the clicked index is 2
           }
           console.log(
             "No changes required. The data already exists and matches."
@@ -1136,7 +1246,7 @@ function handleClick(event) {
 window.onload = function () {
   const listIndex = JSON.parse(localStorage.getItem("tableData"));
   if (listIndex && listIndex.tableName === "File" && listIndex.index === 2) {
-    createFindBill();
+    createFindBill("Search");
   }
 };
 
@@ -1147,41 +1257,41 @@ document.addEventListener("click", handleClick);
   let activeDropdown = null;
 
   // Add click event to each top-level 'li'
-  document.querySelectorAll("nav ul li").forEach((item) => {
-    item.addEventListener("click", (event) => {
-      // Prevent closing dropdown if clicking within the dropdown
-      if (event.target.closest("ul.dropdown")) return;
+  //document.querySelectorAll("nav ul li").forEach((item) => {
+  //  item.addEventListener("click", (event) => {
+  //    // Prevent closing dropdown if clicking within the dropdown
+  //    if (event.target.closest("ul.dropdown")) return;
 
-      // Close the previously opened dropdown if different from the current one
-      document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
-        if (dropdown !== item.querySelector("ul.dropdown")) {
-          dropdown.style.display = "none";
-        }
-      });
+  //    // Close the previously opened dropdown if different from the current one
+  //    document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
+  //      if (dropdown !== item.querySelector("ul.dropdown")) {
+  //        dropdown.style.display = "none";
+  //      }
+  //    });
 
-      // Toggle the display of the current dropdown
-      const dropdown = item.querySelector("ul.dropdown");
-      if (dropdown) {
-        if (dropdown.style.display === "block") {
-          dropdown.style.display = "none";
-          activeDropdown = null;
-        } else {
-          dropdown.style.display = "block";
-          activeDropdown = dropdown;
-        }
-      }
-    });
-  });
+  //    // Toggle the display of the current dropdown
+  //    const dropdown = item.querySelector("ul.dropdown");
+  //    if (dropdown) {
+  //      if (dropdown.style.display === "block") {
+  //        dropdown.style.display = "none";
+  //        activeDropdown = null;
+  //      } else {
+  //        dropdown.style.display = "block";
+  //        activeDropdown = dropdown;
+  //      }
+  //    }
+  //  });
+  //});
 
-  // Hide all dropdowns when clicking outside
-  document.addEventListener("click", (event) => {
-    if (!event.target.closest("nav")) {
-      document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
-        //dropdown.style.display = "none";
-      });
-      activeDropdown = null;
-    }
-  });
+  //// Hide all dropdowns when clicking outside
+  //document.addEventListener("click", (event) => {
+  //  if (!event.target.closest("nav")) {
+  //    document.querySelectorAll("nav ul li ul.dropdown").forEach((dropdown) => {
+  //      //dropdown.style.display = "none";
+  //    });
+  //    activeDropdown = null;
+  //  }
+  //});
 
   function createModal(modalName, headers, inputData, currentRowIndex) {
     const modal = document.createElement("div");

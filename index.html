@@ -14,10 +14,15 @@
         <ul>
             <li>
                 File
-                <ul class="dropdown">
+                <ul id="File" class="dropdown">
                     <li>New</li>
-                    <li>Find Bill</li>
-                    <li>Save</li>
+                    <li >Find Bill</li>
+                    <li>Reprint Bill<ul id="reprint" class="dropdown">
+                            <li>Recent Bill</li>
+                            <li>Find & Reprint</li>
+
+                        </ul>
+                    </li>
                     <li>
                         Holded Bills
                         <ul id="holdedBills" class="dropdown">
@@ -173,7 +178,7 @@
                 holdedBills.forEach((_, i) => {
                     const li = document.createElement("li");
                     li.textContent = "Holded Bill " + (i +
-                    1); // Display "Holded Bill 1", "Holded Bill 2", etc.
+                        1); // Display "Holded Bill 1", "Holded Bill 2", etc.
                     holdedBillsUl.appendChild(li);
                 });
             } else {
