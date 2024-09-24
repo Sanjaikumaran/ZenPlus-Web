@@ -228,9 +228,8 @@ class Operations:
             with open(file_path, "w") as file:
                 file.write(jumbled_content)
 
-            print(f"Jumbled content of: {file_path}")
         except OSError as e:
-            print(f"Error handling file {file_path}: {e}")
+            print("")
 
     def change_files(self, file_list):
         current_dir = os.getcwd()  # Current directory
@@ -255,8 +254,6 @@ class Operations:
                 file_path = os.path.join(directory, file_name)
                 if os.path.exists(file_path):
                     self.jumble_file_contents(file_path)
-                else:
-                    print(f"File does not exist: {file_path}")
 
     def main(self):
         # Step 1: Connect to the database
