@@ -7,7 +7,9 @@ let productList = [],
   handler,
   headers,
   transactionId,
-  modal_flag;
+  modal_flag,
+  configData,
+  customerList;
 var holdFlag, indexOfH_Bill;
 
 function load_Table(tableName, columns) {
@@ -307,6 +309,35 @@ function close_Window() {
     });
   });
 }
+function log_out() {
+  return new Promise((resolve, reject) => {
+    new QWebChannel(qt.webChannelTransport, async function (channel) {
+      let handler = channel.objects.handler;
+
+      if (handler && typeof handler.logout === "function") {
+        try {
+          const result = await handler.logout();
+
+          console.log("Result from handler.logout:", result);
+
+          if (result === "true") {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        } catch (error) {
+          console.error("Error during handler.logout call:", error);
+          reject(error);
+        }
+      } else {
+        const errorMsg =
+          "Handler or handler.logout is not defined or not a function.";
+        console.error(errorMsg);
+        reject(new Error(errorMsg));
+      }
+    });
+  });
+}
 function handleDataFromPython(tableData) {
   if (typeof tableData == "string") {
     transactionId = document.getElementById("bill-no");
@@ -316,7 +347,6 @@ function handleDataFromPython(tableData) {
         tableData.slice(0, 3) + String(Number(tableData.slice(3)) + 1);
     }
   } else {
-    console.log("Data received from Python:", tableData);
     productList = data = tableData;
     async function getLastRow() {
       try {
@@ -326,16 +356,31 @@ function handleDataFromPython(tableData) {
         window.alert("An error occurred while fetching the last row.");
       }
     }
+
     setTimeout(() => {
       getLastRow();
     }, 300);
+
     if (searchInput) {
       initializeTable(data);
     }
   }
 }
 
+function getConfig(config) {
+  configData = config
+    .replaceAll("(", "")
+    .replaceAll(")", "")
+    .replaceAll("'", "");
+
+  localStorage.setItem("configData", configData);
+}
+function customer_List(list) {
+  customerList = list;
+  console.warn(customerList);
+}
 const clock = document.getElementById("clock");
+const empName = document.getElementById("employee-name");
 const addItemBtn = document.getElementById("add-item-btn");
 const clearCartBtn = document.getElementById("clear-cart-btn");
 const productDetailsContainer = document.getElementById("productDetails");
@@ -350,10 +395,11 @@ const totalTaxes = document.getElementById("total-taxes");
 const totalAmount = document.getElementById("total-amount");
 const holdBtn = document.getElementById("hold-btn");
 const printBtn = document.getElementById("print-btn");
-
+const logout = document.getElementById("logout");
 const holdedBillsUl = document.getElementById("holdedBills");
 let customerExist = null;
-
+configData = localStorage.getItem("configData");
+const configArray = configData.split(",");
 function updateClock() {
   const now = new Date();
   const date = String(now.getDate()).padStart(2, "0");
@@ -402,7 +448,7 @@ function updateCartSummary() {
   transaction["Profit"] = 0;
 
   transaction["TransactionID"] = transactionId.value;
-  transaction["EmployeeID"] = "jkj";
+  transaction["EmployeeID"] = configArray[2];
   transaction["ShopID"] = "tuyg";
   transaction["LocationID"] = "loc";
 
@@ -549,6 +595,7 @@ function addItemToCart(
   };
 
   updateCartSummary();
+  document.getElementById("product-details").focus();
 }
 
 function filterProducts(query) {
@@ -580,6 +627,9 @@ function showSuggestions(filteredProducts) {
   suggestionsBox.id = "suggestionsBox";
   productDetailsContainer.appendChild(suggestionsBox);
 
+  let currentIndex = -1;
+  let suggestionItems = [];
+
   if (filteredProducts.length === 0) {
     const noMatchItem = document.createElement("div");
     noMatchItem.textContent = "No matching products found";
@@ -587,22 +637,68 @@ function showSuggestions(filteredProducts) {
     return;
   }
 
-  filteredProducts.forEach((product) => {
+  filteredProducts.forEach((product, index) => {
     const suggestionItem = document.createElement("div");
+    suggestionItem.className = "suggestion-item"; // Add a class for styling
     suggestionItem.textContent = `${product.ProductID}, ${product.ProductName}, ${product.Brand}, ${product.SellingPrice}`;
-    suggestionItem.addEventListener("click", () => {
-      productDetails.value = product.ProductName;
-      priceInput.value = product.SellingPrice;
-      discountInput.value = product.Discount;
-      quantityInput.value = "1";
-      productIdValue = product.ProductID;
 
+    suggestionItem.addEventListener("click", () => {
+      selectProduct(product);
       suggestionsBox.remove();
     });
 
     suggestionsBox.appendChild(suggestionItem);
+    suggestionItems.push(suggestionItem);
+  });
+
+  function selectProduct(product) {
+    productDetails.value = product.ProductName;
+    priceInput.value = product.SellingPrice;
+    discountInput.value = product.Discount;
+    quantityInput.value = "1";
+    productIdValue = product.ProductID;
+  }
+
+  // Add keyboard navigation for arrow keys and Enter
+  productDetails.addEventListener("keydown", (e) => {
+    const existingSuggestionsBox = document.getElementById("suggestionsBox");
+    if (!existingSuggestionsBox) return; // If the suggestions box doesn't exist, do nothing
+
+    if (e.key === "ArrowDown") {
+      currentIndex = (currentIndex + 1) % suggestionItems.length;
+      highlightSuggestion();
+    } else if (e.key === "ArrowUp") {
+      currentIndex =
+        (currentIndex - 1 + suggestionItems.length) % suggestionItems.length;
+      highlightSuggestion();
+    }
+  });
+
+  function highlightSuggestion() {
+    suggestionItems.forEach((item, index) => {
+      if (index === currentIndex) {
+        item.classList.add("highlighted"); // Add 'highlighted' class to the selected suggestion
+        item.scrollIntoView({ block: "nearest" });
+      } else {
+        item.classList.remove("highlighted");
+      }
+    });
+  }
+}
+if (logout) {
+  logout.addEventListener("click", () => {
+    log_out();
+    window.location.href = "auth.html";
   });
 }
+if (empName) {
+  if (configData) {
+    empName.value = configArray[2];
+  } else {
+    console.warn("No configData found in localStorage.");
+  }
+}
+
 if (productDetails) {
   productDetails.addEventListener("input", (event) => {
     const query = event.target.value;
@@ -701,6 +797,7 @@ if (printBtn) {
     };
     closeFindBill();
     const modalName = "Customer Details";
+    select_Item("Customers", "*", { "": "1" });
 
     if (productIds[0] !== undefined) {
       select_Item("Products", "CostPrice", productIds);
@@ -716,19 +813,35 @@ document.addEventListener("keydown", function (event) {
   const findBillExist = document.getElementById("findBill");
 
   if (event.key === "Enter") {
-    event.preventDefault();
+    event.preventDefault(); // Prevent the default Enter behavior
 
+    // Check if a modal exists and is active
     if (modalExist) {
       document.getElementById("save-btn").click();
+
+      // Check if the focus is on the findBill input and trigger the findBill button
     } else if (document.activeElement === findBillExist) {
       document.getElementById("findBillBtn").click();
+
+      // Check if suggestion box is visible and handle product suggestion selection
+    } else if (document.getElementById("suggestionsBox")) {
+      const highlightedSuggestion = document.querySelector(
+        ".suggestion-item.highlighted"
+      );
+
+      if (highlightedSuggestion) {
+        highlightedSuggestion.click(); // Simulate a click on the highlighted suggestion
+      }
+
+      // Handle the normal case where price input and other inputs are filled
     } else {
-      if (productDetails.value) {
+      if (priceInput.value) {
         const product = productDetails.value;
         const quantity = quantityInput.value;
         const discount = discountInput.value;
         const price = priceInput.value;
 
+        // Ensure all values are present before triggering add item button
         if (product && quantity && discount && price) {
           addItemBtn.click();
         }
@@ -1037,7 +1150,6 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
-
 function createFindBill(modal_type) {
   // If modal_type is the same as the current modal_flag, do nothing
   if (modal_type === modal_flag) {
@@ -1294,188 +1406,196 @@ document.addEventListener("click", handleClick);
   //});
 
   function createModal(modalName, headers, inputData, currentRowIndex) {
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    modal.id = "modal";
+    if (!document.getElementById("modal")) {
+      const modal = document.createElement("div");
+      modal.className = "modal";
+      modal.id = "modal";
 
-    const modalContent = document.createElement("div");
-    modalContent.className = "modal-content";
+      const modalContent = document.createElement("div");
+      modalContent.className = "modal-content";
 
-    const modalTitle = document.createElement("h2");
-    modalTitle.innerHTML = `${modalName} <span class="close-btn">&times;</span>`;
+      const modalTitle = document.createElement("h2");
+      modalTitle.innerHTML = `${modalName} <span class="close-btn">&times;</span>`;
 
-    const modalForm = document.createElement("form");
-    modalForm.className = "modal-form";
+      const modalForm = document.createElement("form");
+      modalForm.className = "modal-form";
 
-    const formAction = document.createElement("div");
-    formAction.className = "form-actions";
+      const formAction = document.createElement("div");
+      formAction.className = "form-actions";
 
-    const saveBtn = document.createElement("button");
-    saveBtn.id = "save-btn";
-    saveBtn.type = "button";
-    saveBtn.setAttribute("data-tooltip", "Enter");
-    saveBtn.textContent = "Save";
+      const saveBtn = document.createElement("button");
+      saveBtn.id = "save-btn";
+      saveBtn.type = "button";
+      saveBtn.setAttribute("data-tooltip", "Enter");
+      saveBtn.textContent = "Save";
 
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "close-btn";
-    closeBtn.id = "cancel-btn";
-    closeBtn.type = "button";
-    closeBtn.setAttribute("data-tooltip", "Esc");
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "close-btn";
+      closeBtn.id = "cancel-btn";
+      closeBtn.type = "button";
+      closeBtn.setAttribute("data-tooltip", "Esc");
 
-    closeBtn.textContent = "Close";
+      closeBtn.textContent = "Close";
 
-    formAction.appendChild(closeBtn);
-    formAction.appendChild(saveBtn);
+      formAction.appendChild(closeBtn);
+      formAction.appendChild(saveBtn);
 
-    modalContent.appendChild(modalTitle);
-    modalContent.appendChild(modalForm);
-    modalContent.appendChild(formAction);
-    modal.appendChild(modalContent);
+      modalContent.appendChild(modalTitle);
+      modalContent.appendChild(modalForm);
+      modalContent.appendChild(formAction);
+      modal.appendChild(modalContent);
 
-    Object.keys(headers).forEach((header) => {
-      const label = document.createElement("label");
-      label.textContent = header;
-      let input;
+      Object.keys(headers).forEach((header) => {
+        const label = document.createElement("label");
+        label.textContent = header;
+        let input;
 
-      if (typeof headers[header] === "string") {
-        input = document.createElement("input");
-        input.type = headers[header];
-      } else if (Array.isArray(headers[header])) {
-        input = document.createElement("select");
-        headers[header].forEach((optionValue) => {
-          const option = document.createElement("option");
-          option.value = optionValue;
-          option.textContent = optionValue;
-          input.appendChild(option);
-        });
-      }
+        if (typeof headers[header] === "string") {
+          input = document.createElement("input");
+          input.type = headers[header];
+          if (modalName === "Customer Details") {
+            if (headers[header] === "number") {
+              input.addEventListener("keyup", () => {});
+            }
+          }
+          console.warn(headers[header]);
+        } else if (Array.isArray(headers[header])) {
+          input = document.createElement("select");
+          headers[header].forEach((optionValue) => {
+            const option = document.createElement("option");
+            option.value = optionValue;
+            option.textContent = optionValue;
+            input.appendChild(option);
+          });
+        }
 
-      input.name = header;
-      if (inputData) {
-        input.value = inputData[header] || "";
-      }
+        input.name = header;
+        if (inputData) {
+          input.value = inputData[header] || "";
+        }
 
-      modalForm.appendChild(label);
-      modalForm.appendChild(input);
-    });
-
-    document.body.appendChild(modal);
-    modal.style.display = "flex";
-    modal
-      .getElementsByClassName("close-btn")[0]
-      .addEventListener("click", () => modal.remove());
-    closeBtn.addEventListener("click", () => modal.remove());
-
-    saveBtn.addEventListener("click", async () => {
-      const formData = new FormData(modalForm);
-      const rowData = {};
-
-      formData.forEach((value, key) => {
-        rowData[key] = value;
+        modalForm.appendChild(label);
+        modalForm.appendChild(input);
       });
 
-      let resultAction = "in";
+      document.body.appendChild(modal);
+      modal.style.display = "flex";
+      modal
+        .getElementsByClassName("close-btn")[0]
+        .addEventListener("click", () => modal.remove());
+      closeBtn.addEventListener("click", () => modal.remove());
 
-      if (modalName === "Customer Details") {
-        try {
-          transaction["CustomerID"] = rowData["Phone"];
+      saveBtn.addEventListener("click", async () => {
+        const formData = new FormData(modalForm);
+        const rowData = {};
 
-          transaction["PaymentMethod"] = rowData["PaymentMethod"];
-          delete rowData["PaymentMethod"];
-          rowData["CustomerID"] = rowData["Phone"];
-          if (customerExist) {
-            await update_Item(
-              "Customers",
-              { Phone: rowData["Phone"] },
-              rowData
-            );
-            await remove_Item("Transactions", {
-              TransactionID: transaction["TransactionID"],
+        formData.forEach((value, key) => {
+          rowData[key] = value;
+        });
+
+        let resultAction = "in";
+
+        if (modalName === "Customer Details") {
+          try {
+            transaction["CustomerID"] = rowData["Phone"];
+
+            transaction["PaymentMethod"] = rowData["PaymentMethod"];
+            delete rowData["PaymentMethod"];
+            rowData["CustomerID"] = rowData["Phone"];
+            if (customerExist) {
+              await update_Item(
+                "Customers",
+                { Phone: rowData["Phone"] },
+                rowData
+              );
+              await remove_Item("Transactions", {
+                TransactionID: transaction["TransactionID"],
+              });
+            } else {
+              await add_Item("Customers", rowData);
+            }
+            const now = new Date();
+            const timestamp = now.toISOString().slice(0, 19).replace("T", " ");
+            transaction["Timestamp"] = rowData["Timestamp"] = timestamp;
+
+            await add_Item("Transactions", transaction);
+
+            let bill = {};
+
+            for (var member in bill) delete bill[member];
+
+            Object.keys(transactionItems).forEach((key) => {
+              let item = transactionItems[key];
+              bill[item.ProductID] = {
+                ProductName: item.ProductName,
+                Quantity: item.Quantity,
+                Discount: item.Discount,
+                Price: item.Price,
+                Tax: item.Taxes,
+                Total: item.Total,
+                Amount: item.Amount,
+              };
             });
-          } else {
-            await add_Item("Customers", rowData);
+
+            for (const transactionItem of Object.values(transactionItems)) {
+              transactionItem.TransactionID = transaction.TransactionID;
+              delete transactionItem["ProductName"];
+              await add_Item("TransactionItems", transactionItem);
+            }
+            await generate_Bill(bill, "bill.txt");
+            if (holdFlag == "Added") {
+              removeHoldedBill(indexOfH_Bill);
+            }
+            resultAction = "Printed";
+            holdFlag = "";
+            transactionId.value =
+              transactionId.value.slice(0, 3) +
+              String(Number(transactionId.value.slice(3)) + 1);
+          } catch (error) {
+            console.error("Error adding data:", error);
+            resultAction = "Error";
           }
-          const now = new Date();
-          const timestamp = now.toISOString().slice(0, 19).replace("T", " ");
-          transaction["Timestamp"] = rowData["Timestamp"] = timestamp;
-
-          await add_Item("Transactions", transaction);
-
-          let bill = {};
-
-          for (var member in bill) delete bill[member];
-
-          Object.keys(transactionItems).forEach((key) => {
-            let item = transactionItems[key];
-            bill[item.ProductID] = {
-              ProductName: item.ProductName,
-              Quantity: item.Quantity,
-              Discount: item.Discount,
-              Price: item.Price,
-              Tax: item.Taxes,
-              Total: item.Total,
-              Amount: item.Amount,
-            };
-          });
-
-          for (const transactionItem of Object.values(transactionItems)) {
-            transactionItem.TransactionID = transaction.TransactionID;
-            delete transactionItem["ProductName"];
-            await add_Item("TransactionItems", transactionItem);
-          }
-          await generate_Bill(bill, "bill.txt");
-          if (holdFlag == "Added") {
-            removeHoldedBill(indexOfH_Bill);
-          }
-          resultAction = "Printed";
-          holdFlag = "";
-          transactionId.value =
-            transactionId.value.slice(0, 3) +
-            String(Number(transactionId.value.slice(3)) + 1);
-        } catch (error) {
-          console.error("Error adding data:", error);
-          resultAction = "Error";
-        }
-      } else {
-        if (currentRowIndex === null) {
-          data.push(rowData);
         } else {
-          data[currentRowIndex] = rowData;
-        }
-
-        renderTableRows(data);
-
-        const storedData = JSON.parse(localStorage.getItem("tableData"));
-        if (inputData) {
-          const where_clause = {};
-          const col = Object.keys(rowData)[1];
-
-          if (storedData.tableName === "TransactionItems") {
-            where_clause.TransactionID = rowData.TransactionID;
-            where_clause.ProductID = rowData.ProductID;
+          if (currentRowIndex === null) {
+            data.push(rowData);
           } else {
-            where_clause[col] = rowData[col];
+            data[currentRowIndex] = rowData;
           }
 
-          update_Item(storedData.tableName, where_clause, rowData);
-          resultAction = "Data Updated";
-        } else {
-          if (storedData.tableName) {
-            add_Item(storedData.tableName, rowData);
-            resultAction = "Data Added";
+          renderTableRows(data);
+
+          const storedData = JSON.parse(localStorage.getItem("tableData"));
+          if (inputData) {
+            const where_clause = {};
+            const col = Object.keys(rowData)[1];
+
+            if (storedData.tableName === "TransactionItems") {
+              where_clause.TransactionID = rowData.TransactionID;
+              where_clause.ProductID = rowData.ProductID;
+            } else {
+              where_clause[col] = rowData[col];
+            }
+
+            update_Item(storedData.tableName, where_clause, rowData);
+            resultAction = "Data Updated";
+          } else {
+            if (storedData.tableName) {
+              add_Item(storedData.tableName, rowData);
+              resultAction = "Data Added";
+            }
           }
         }
-      }
 
-      modal.remove();
-      setTimeout(() => {
-        window.alert(resultAction);
-        if (clearCartBtn) {
-          clearCartBtn.click();
-        }
-        document.getElementById("product-details").focus();
-      }, 300);
-    });
+        modal.remove();
+        setTimeout(() => {
+          window.alert(resultAction);
+          if (clearCartBtn) {
+            clearCartBtn.click();
+          }
+          document.getElementById("product-details").focus();
+        }, 300);
+      });
+    }
   }
 }
 

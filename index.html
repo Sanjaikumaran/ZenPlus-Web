@@ -16,7 +16,7 @@
                 File
                 <ul id="File" class="dropdown">
                     <li>New</li>
-                    <li >Find Bill</li>
+                    <li>Find Bill</li>
                     <li>Reprint Bill<ul id="reprint" class="dropdown">
                             <li>Recent Bill</li>
                             <li>Find & Reprint</li>
@@ -95,31 +95,41 @@
         <h1>Zen Plus</h1>
         <div id="header-details">
             <label for="employee-name">Employee Name:</label>
-            <input type="text" id="employee-name" value="SK" disabled>
+            <input type="text" id="employee-name" value="Loading..." disabled>
             <label for="bill-no">Bill Number:</label>
-            <input type="text" id="bill-no" value="TRN9999" disabled>
+            <input type="text" id="bill-no" value="Loading..." disabled>
             <span id="date-time"><span id="clock">--:--:--</span></span>
+            <span id="logout" style="position: absolute;right: 70px;">Log Out</span>
         </div>
     </div>
 
     <div id="productDetails">
-        <div id="product-input-labels">
-            <label for="product-details">Product Name:</label>
-            <label for="quantityInput">Quantity:</label>
-            <label for="discountInput">Discount:</label>
-            <label for="priceInput">Price:</label>
+        <div id="product-input-container">
+            <div class="input-group">
+                <label for="product-details">Product Name:</label>
+                <input type="text" id="product-details" placeholder="Product (Name,Price,ID,Brand)" autocomplete="off"
+                    required>
+            </div>
+            <div class="input-group">
+                <label for="quantityInput">Quantity:</label>
+                <input type="number" id="quantityInput" placeholder="Quantity" autocomplete="off" required>
+            </div>
+            <div class="input-group">
+                <label for="discountInput">Discount:</label>
+                <input type="number" id="discountInput" placeholder="Discount" autocomplete="off" required>
+            </div>
+            <div class="input-group">
+                <label for="priceInput">Price:</label>
+                <input type="number" id="priceInput" placeholder="Price" autocomplete="off" required>
+            </div>
+            <div id="product-buttons-container">
+                <button id="add-item-btn">Add Item</button>
+                <button id="clear-cart-btn">Clear Cart</button>
+                <button id="hold-btn">Hold</button>
+                <button id="print-btn">Print</button>
+            </div>
         </div>
-        <div id="product-input">
-            <input type="text" onload="this.focus()" placeholder="Product (Name,Price,ID,Brand)" id="product-details"
-                autocomplete="off" required>
-            <input type="number" placeholder="Quantity" id="quantityInput" autocomplete="off" required>
-            <input type="number" placeholder="Discount" id="discountInput" autocomplete="off" required>
-            <input type="number" placeholder="Price" id="priceInput" autocomplete="off" required>
-            <button data-tooltip="Enter" id="add-item-btn">Add Item</button>
-            <button data-tooltip="Escape" id="clear-cart-btn">Clear Cart</button>
-            <button data-tooltip="Ctrl + H" id="hold-btn">Hold</button>
-            <button data-tooltip="Ctrl + P" id="print-btn">Print</button>
-        </div>
+
         <!-- Suggestions box -->
         <!--<div id="suggestionsBox" class="suggestions-box"></div>-->
     </div>

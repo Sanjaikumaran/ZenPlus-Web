@@ -101,6 +101,17 @@ nav ul li:hover {
     background-color: #ececec;
 }
 
+.suggestion-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+    background-color: #f0f0f0;
+    color: #000;
+}
+
 /* Dropdown (hidden by default) */
 nav ul li ul.dropdown {
     display: none;
@@ -373,6 +384,11 @@ nav ul li ul.dropdown li:hover {
     border: none;
 }
 
+#logout:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 #cart-summary {
     display: flex;
     flex-wrap: wrap;
@@ -393,40 +409,52 @@ nav ul li ul.dropdown li:hover {
     margin: 5px;
 }
 
-#product-input {
-    margin-top: 5px;
-    display: flex;
-    justify-content: center;
+#product-input-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    /* Auto for the buttons */
     align-items: center;
-    margin: 10px 10px 10px 20px;
-}
-
-#product-input-labels {
-    display: flex;
-    margin-left: 20px;
-    margin-top: 10px;
-}
-
-#product-input-labels label {
-    width: 362px;
-}
-
-#product-input input {
+    gap: 10px;
+    margin: 10px;
     padding: 10px;
-    margin-right: 10px;
+    background-color: #f9f9f9;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.input-group label {
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.input-group input {
+    padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    flex: 1;
 }
 
-#product-input button {
+#product-buttons-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+#product-buttons-container button {
     background-color: #5C509C;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
-    margin-right: 10px;
+}
+
+#product-buttons-container button:hover {
+    background-color: #443980;
 }
 
 .suggestions-box {
@@ -476,16 +504,17 @@ nav ul li ul.dropdown li:hover {
 }
 
 #empty-cart {
-    font-size: xx-large;
+    font-size: 2rem;
+
     font-weight: 100;
-    display: block;
-
+    display: flex;
     justify-content: center;
-
     align-items: center;
-
+    text-align: center;
     margin: auto;
-
+    height: 100%;
+    width: 100%;
+    color: #474646;
 }
 
 .cart-item {

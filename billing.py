@@ -11,6 +11,27 @@ from PyQt5.QtCore import QUrl, QObject, pyqtSlot, pyqtSignal
 from PyQt5.QtWebChannel import QWebChannel
 import operations_access
 from PyQt5.QtGui import QContextMenuEvent
+from cryptography.fernet import Fernet
+
+flag = False
+
+
+def decrypt_file():
+    try:
+        with open("config.enc", "rb") as file:
+
+            key = file.readline().strip()
+            encrypted_data = file.read()
+
+        cipher_suite = Fernet(key)
+        decrypted_data = cipher_suite.decrypt(encrypted_data).decode()
+
+        return decrypted_data
+    except Exception:
+        return False
+
+
+flag = decrypt_file()
 
 
 class MainWindow(QMainWindow):
@@ -18,9 +39,14 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Zen Plus")
         self.browser = QWebEngineView()
-        html_file_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "index.html")
-        )
+        if flag:
+            html_file_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "index.html")
+            )
+        else:
+            html_file_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "auth.html")
+            )
         self.browser.setUrl(QUrl.fromLocalFile(html_file_path))
         self.channel = QWebChannel()
         self.handler = Handler(self.browser)
@@ -58,10 +84,10 @@ class Handler(QObject):
         super().__init__()
         self.manager = operations_access.DataManagement()
         self.browser = browser
-        self.manager.main1()
 
     @pyqtSlot(str)
     def loadTable(self, table_name):
+
         columns = ""
         if table_name == "Products":
             columns = "SNo,ProductID,ProductName,Timestamp,Brand,CostPrice,SellingPrice,MRP,Discount,CurrentStock,HistoryStock,SoldStock,GST"
@@ -84,6 +110,7 @@ class Handler(QObject):
         data_dicts = [dict(zip(keys, item)) for item in data]
         json_data = json.dumps(data_dicts)
         self.browser.page().runJavaScript(f"handleDataFromPython({json_data})")
+        self.browser.page().runJavaScript(f"getConfig({json.dumps(flag)})")
 
     @pyqtSlot(str, str)
     def addItem(self, table_name, columns_values_json):
@@ -297,9 +324,68 @@ class Handler(QObject):
         else:
             print(f"Printing is not supported on {system_name}.")
 
+    @pyqtSlot(str, str)
+    def login(self, employee_id, password):
+
+        def create_encrypted_file(data, filename):
+
+            key = Fernet.generate_key()
+            cipher_suite = Fernet(key)
+
+            encrypted_data = cipher_suite.encrypt(str(data).encode())
+
+            with open(filename, "wb") as file:
+
+                file.write(key + b"\n")
+
+                file.write(encrypted_data)
+
+        try:
+
+            table_name = "Employees"
+            column_names = "EmployeeID,ShopID,FirstName,LastName"
+            where_clause = {"EmployeeID": employee_id}
+
+            result = self.manager.get_item(table_name, column_names, where_clause)
+
+            if result and result[0]:
+                emp_id, emp_shop_id, first_name, last_name = result[0]
+
+                if password == emp_shop_id:
+                    self.browser.page().runJavaScript(
+                        f"getConfig({json.dumps(result[0])})"
+                    )
+                    self.browser.page().runJavaScript(
+                        f"loginSuccess('{emp_id}', '{first_name} {last_name}')"
+                    )
+
+                    create_encrypted_file(result[0], "config.enc")
+
+                    return True
+                else:
+                    print("Invalid ShopID")
+                    return False
+            else:
+                print(f"No employee found with EmployeeID: {employee_id}")
+                return False
+        except Exception as e:
+            print(f"Error in login: {str(e)}")
+            return None
+
     @pyqtSlot()
     def closeWindow(self):
         QApplication.quit()
+
+    @pyqtSlot()
+    def logout(self):
+
+        try:
+            os.remove("config.enc")
+
+        except FileNotFoundError:
+            print("File not found")
+        except Exception as e:
+            print(f"Error deleting the file: {e}")
 
 
 if __name__ == "__main__":
